@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Gremlin Logic A15
 // @namespace    local.imagetrend.a15native
-// @version      0.2.4.10
+// @version      0.2.4.11
 // @description  Gremlin Logic A15: native defaults, local pre-run capture, bounded recovery and linked issues. A15 chart workflow.
 // @match        https://pafford.imagetrendelite.com/Elite/Organizationpafford/Agencypmsmsboliv/EmsRunForm*
 // @updateURL    https://raw.githubusercontent.com/bljscrivener/imagetrend-a15-native-test/main/imagetrend-a15-native-test.user.js
@@ -18,7 +18,7 @@
   const host=document.createElement('div');host.id='it-a15-native-test';
   host.style.cssText='position:fixed;right:24px;top:90px;z-index:2147483646';
   const ui=host.attachShadow({mode:'open'});
-  ui.innerHTML='<style>:host{font:14px system-ui;color:#253144}section{background:white;border:2px solid #864ca3;border-radius:12px;padding:16px;width:440px;max-width:85vw;max-height:70vh;overflow:auto;box-shadow:0 8px 24px #0004}button,select{font:inherit;padding:8px;margin:5px 0}select{width:100%}pre{white-space:pre-wrap;font:12px system-ui;background:#f4edf8;padding:9px}label{display:block;margin:10px 0}h3{margin:0}small{display:block;margin:8px 0}button{cursor:pointer}#apply{background:#864ca3;color:white;border:0;border-radius:5px}button:disabled{opacity:.45}[hidden]{display:none!important}</style><button id="launch">Gremlin Logic A15</button><section hidden><h3>Gremlin Logic · A15 0.2.4.10</h3><small>A15 chart workflow. Changes may persist immediately; chart Save remains yours.</small><p id="profile"><strong>Profile: A15</strong></p><button id="preview">Preview A15 changes</button><pre id="result">Review from any chart section. All mapped A15 defaults are selected; unavailable fields are listed for attention.</pre><small id="apply-note">Go, baby, go applies supported A15 defaults. Use only when they match the care provided. You remain responsible for chart accuracy and final review.</small><button id="apply" disabled>Go, baby, go</button> <button id="hide">Minimize</button></section>';
+  ui.innerHTML='<style>:host{font:14px system-ui;color:#253144}section{background:white;border:2px solid #864ca3;border-radius:12px;padding:16px;width:440px;max-width:85vw;max-height:70vh;overflow:auto;box-shadow:0 8px 24px #0004}button,select{font:inherit;padding:8px;margin:5px 0}select{width:100%}pre{white-space:pre-wrap;font:12px system-ui;background:#f4edf8;padding:9px}label{display:block;margin:10px 0}h3{margin:0}small{display:block;margin:8px 0}button{cursor:pointer}#apply{background:#864ca3;color:white;border:0;border-radius:5px}button:disabled{opacity:.45}[hidden]{display:none!important}</style><button id="launch">Gremlin Logic A15</button><section hidden><h3>Gremlin Logic · A15 0.2.4.11</h3><small>A15 chart workflow. Changes may persist immediately; chart Save remains yours.</small><p id="profile"><strong>Profile: A15</strong></p><button id="preview">Preview A15 changes</button><pre id="result">Review from any chart section. All mapped A15 defaults are selected; unavailable fields are listed for attention.</pre><small id="apply-note">Go, baby, go applies supported A15 defaults. Use only when they match the care provided. You remain responsible for chart accuracy and final review.</small><button id="apply" disabled>Go, baby, go</button> <button id="hide">Minimize</button></section>';
   document.body.append(host);
   const $=s=>ui.querySelector(s);let reviewed=null,busy=false;
   const ENTRY_PATHS={"8a6e1556-e16f-516e-9f09-2a01527a24ba":"Incident.Scene.Response.Patient.Vitals","53af0886-1a17-576c-b77d-d64b3a7a930a":"Incident.Scene.Response.Patient.Vitals[].VitalsVitalsDateTimeModValue.VitalsDateTime","3ecad398-beca-5784-94f0-217e4bf92db7":"Incident.Scene.Response.Patient.Vitals[].VitalsObtainedPriorToEMSCareModValue.ObtainedPriorToEMSCare","8375d602-dcd5-5c1a-83e1-ceda50c7410c":"Incident.Scene.Response.Patient.Vitals[].VitalsCrewMemberIDModValue.LicensureID","7f5c88af-a3be-5947-b47b-ffe6cc957102":"Incident.Scene.Response.Patient.Vitals[].VitalsLevelOfResponseModValue.LevelOfResponse","94f6e43f-139c-5eda-bd46-bdb95d7111bd":"Incident.Scene.Response.Patient.Vitals[].VitalsGCSEyeModValue.GCSEye","30b5cc8f-c8c4-5446-a140-df8017828842":"Incident.Scene.Response.Patient.Vitals[].VitalsGCSVerbalModValue.GCSVerbal","de69b8e0-ea97-5898-af28-163665df5d03":"Incident.Scene.Response.Patient.Vitals[].VitalsGCSMotorModValue.GCSMotor","d6db496e-fd74-5d8a-a016-e324072dcb9c":"Incident.Scene.Response.Patient.Vitals[].GCSQualifiers[].GCSQualifierGCSQualifierModValue.GCSQualifier","4fcdbba5-c769-5176-b37b-64db2f5aff94":"Incident.Scene.Response.Patient.Vitals[].VitalsGCSTotalModValue.GCSTotal","b0258daa-3a9c-5a0d-8f6d-629891c26562":"Incident.Scene.Response.Patient.Vitals[].VitalsSBPModValue.SBP","6fd0cdf7-f71a-50a9-b02a-5819f40e356a":"Incident.Scene.Response.Patient.Vitals[].VitalsDBPModValue.DBP","0dcf3d4f-f98d-53c9-a042-3bd73e6104d9":"Incident.Scene.Response.Patient.Vitals[].VitalsBPMethodModValue.BPMethod","37500c2a-2a78-53d2-9559-78c75eda9cb3":"Incident.Scene.Response.Patient.Vitals[].BPLocation","08dee948-3a33-5983-b74f-fe5823ae94a0":"Incident.Scene.Response.Patient.Vitals[].MeanArterialPressure","8d1b6f04-cc37-5ee1-85f7-9619cfb05873":"Incident.Scene.Response.Patient.Vitals[].VitalsPulseRateModValue.PulseRate","189b8c3d-3285-5066-b469-296a5c87d922":"Incident.Scene.Response.Patient.Vitals[].PulseRateMethod","946f201d-2126-5b9a-b73c-b6a098c254da":"Incident.Scene.Response.Patient.Vitals[].VitalsRespiratoryRateModValue.RespiratoryRate","1ac08c15-b252-5b17-bdd5-990dfb81b475":"Incident.Scene.Response.Patient.Vitals[].RespiratoryEffort","d4b32d81-fc1e-544f-aeba-77e176cac505":"Incident.Scene.Response.Patient.Vitals[].RespiratoryRegularity","76e7fb24-9a8f-51e9-8dfb-bdf1144ef197":"Incident.Scene.Response.Patient.Vitals[].VitalsPulseOximetryModValue.PulseOximetry","98cd8d07-762f-5665-9bef-e9b908b6d9dd":"Incident.Scene.Response.Patient.Vitals[].PulseOximetryQualifier","d892f99f-5dcc-5abb-b2fe-8a0d1935e581":"Incident.Scene.Response.Patient.Vitals[].VitalsCarbonDioxideModValue.CarbonDioxide","01975843-3408-5a00-b45b-79e64e0db108":"Incident.Scene.Response.Patient.Vitals[].VitalsCarbonDioxideModValue.Unit","84dd4a6f-18ce-51e2-a00c-1e54d1c31ead":"Incident.Scene.Response.Patient.Vitals[].VitalsBloodGlucoseModValue.BloodGlucose","7bea3862-f196-567b-b9e9-9239b9f103e8":"Incident.Scene.Response.Patient.Vitals[].VitalsBodyTemperatureCModValue.BodyTemperatureC","73e8899f-058f-5144-88f3-1c1640cb7a7d":"Incident.Scene.Response.Patient.Vitals[].TemperatureMethod","42cf38a8-8380-571b-93d4-392a3183d47c":"Incident.Scene.Response.Patient.Vitals[].VitalsPainScoreModValue.PainScore","37a26280-090a-5d8d-b95d-c6c950839a6f":"Incident.Scene.Response.Patient.Vitals[].VitalsPainScaleTypeModValue.PainScaleType","10388fca-facb-5673-87e2-e109f28bd064":"Incident.Scene.Response.Patient.Vitals[].VitalsStrokeScoreModValue.StrokeScore","408ab322-147e-5539-afaf-2062d143a55c":"Incident.Scene.Response.Patient.Vitals[].VitalsStrokeScaleTypeModValue.StrokeScaleType","ee0c31ce-9274-5df2-a435-95915e6e2ddb":"Incident.Scene.Response.Patient.Vitals[].RichmondAgitationSedationScale","5c02d626-6c37-5418-bb6e-696df46b3ef0":"Incident.Scene.Response.Patient.Vitals[].VitalsAPGARModValue.APGAR","59cd95c4-0496-546f-8c53-4b21bf9ff965":"Incident.Scene.Response.Patient.Vitals[].VitalsThrombolyticScreenModValue.ThrombolyticScreen","5ef095a7-a0ef-5d0b-9dcf-6a12ce47f85f":"Incident.Scene.Response.Patient.Vitals[].VitalsECGTypeModValue.ECGType","fc93d071-9efc-5ce9-a393-3507852a8e19":"Incident.Scene.Response.Patient.Vitals[].ECGCardiacRhythms[].ECGCardiacRhythmCardiacRhythmModValue.CardiacRhythm","50afd178-e284-59dd-a4f8-463af0acfad3":"Incident.Scene.Response.Patient.Vitals[].ECGInterpretations[].ECGInterpretationInterpretationMethodModValue.InterpretationMethod","1b57645d-c521-5d46-a400-5a67aaec7aad":"Incident.Scene.Response.Patient.Vitals[].VitalsWaveforms","c9b0b483-c98e-5a08-bd18-89a337374339":"Incident.Scene.Response.Patient.ProtocolUseds","915663be-bec8-5dc5-b2ae-e1901f5ade04":"Incident.Scene.Response.Patient.ProtocolUseds[].ProtocolUsedProtocolModValue.Protocol","51af94d0-e421-5002-af47-2539205ff625":"Incident.Scene.Response.Patient.ProtocolUseds[].ProtocolUsedProtocolAgeCategoryModValue.ProtocolAgeCategory","aa6d315f-ccbc-58c0-950e-2e0932ee67b6":"Incident.Scene.Response.Patient.PatientProcedures","231489ba-6c9e-5e78-a52b-40b13e6bcc26":"Incident.Scene.Response.Patient.PatientProcedures[].PatientProcedureProcedureDateTimeModValue.ProcedureDateTime","c07c1d8b-c7d4-5a5a-8ec1-01bf67f882e0":"Incident.Scene.Response.Patient.PatientProcedures[].PatientProcedurePriorToEMSUnitCareModValue.PriorToEMSUnitCare","31eb2248-cb52-f111-b7ac-b38df619f2c6":"Incident.Scene.Response.Patient.PatientProcedures[].SupplementalQuestions.31eb2248-cb52-f111-b7ac-b38df619f2c6","03581536-da9b-562c-9229-8a29353b5f40":"Incident.Scene.Response.Patient.PatientProcedures[].PatientProcedureCrewMemberIDModValue.LicensureID","9d0465df-a31c-f111-88a8-cdf828d6164c":"Incident.Scene.Response.Patient.PatientProcedures[].SupplementalQuestions.9d0465df-a31c-f111-88a8-cdf828d6164c","d0c37cfb-ac96-5c0e-9eb6-d21aeb3f57d7":"Incident.Scene.Response.Patient.PatientProcedures[].PatientProcedurePerformerRoleModValue.PerformerRole","6a3cd763-c562-574c-b209-bbced74d73c1":"Incident.Scene.Response.Patient.PatientProcedures[].ProcedureAuthorization","02dffd5f-4c68-506b-881d-5b00c78090aa":"Incident.Scene.Response.Patient.PatientProcedures[].PatientProcedureProcedurePerformedModValue.ProcedurePerformed","14775b1d-c505-5161-b7c9-7c9ea3c56cc4":"Incident.Scene.Response.Patient.PatientProcedures[].SizeOfEquipment","7f9c5ed0-8a4e-5f82-be4b-c6139be2f60a":"Incident.Scene.Response.Patient.PatientProcedures[].PatientProcedureProcedureLocationModValue.ProcedureLocation","342287d1-d2df-5bc9-bc3a-572db35c10bb":"Incident.Scene.Response.Patient.PatientProcedures[].PatientProcedureVascularAccessLocationModValue.VascularAccessLocation","536eb7cc-2c34-58bc-994b-c46c6e5ee80f":"Incident.Scene.Response.Patient.PatientProcedures[].LaryngoscopeBladeProcedure","73a818d0-5b75-5cbf-911a-114f70d294e5":"Incident.Scene.Response.Patient.PatientProcedures[].PatientProcedureNumberOfAttemptsModValue.NumberOfAttempt","adcc71b8-0b92-5387-8b9f-cb94b729e4ac":"Incident.Scene.Response.Patient.PatientProcedures[].PatientProcedureProcedureSuccessfulModValue.ProcedureSuccessful","9cb81cbd-eb5d-5516-aacd-1a75a68e99a2":"Incident.Scene.Response.Patient.PatientProcedures[].PatientProcedureComplications[].PatientProcedureComplicationProcedureComplicationModValue.ProcedureComplication","5d094507-a437-5112-8f16-58d56704dc7c":"Incident.Scene.Response.Patient.PatientProcedures[].PatientProcedurePatientResponseModValue.PatientResponse","21fff6b7-0787-5a85-91f4-3b6ec40cc2fa":"Incident.Scene.Response.Patient.PatientProcedures[].ProcedureComment","c432c124-8bd9-ef11-bfc8-001dd8b72ccf":"Incident.SupplementalQuestions.c432c124-8bd9-ef11-bfc8-001dd8b72ccf","417e9589-a07e-5982-8cec-7893618b9f83":"Incident.Scene.Response.Patient.Medications"};
@@ -36,23 +36,6 @@
     return known || null;
   }
   let times={},invalidTimes=new Set();
-  async function readTimes(){
-    const ids=['29331','29332','29335','29336','29337','29338','29342'],url=location.href;
-    const inputs=()=>ids.flatMap(id=>[...document.querySelectorAll('[id="'+id+'Date"]')]).filter(visible);
-    let opener=null;
-    try{
-      if(!inputs().length){opener=document.querySelector('#response-times-tool');if(!opener)throw Error('Open Times to read procedure timing.');opener.click();for(let i=0;i<25&&!inputs().length;i++)await new Promise(r=>setTimeout(r,100));}
-      if(url!==location.href||!inputs().length)throw Error('Timeline unavailable.');
-      const next={};invalidTimes=new Set();for(const id of ids){
-        const date=[...document.querySelectorAll('[id="'+id+'Date"]')].filter(visible),time=[...document.querySelectorAll('[id="'+id+'Time"]')].filter(visible);
-        if(date.length!==1||time.length!==1)continue;
-        const d=/^(\d{2})\/(\d{2})\/(\d{4})$/.exec(date[0].value),t=/^(\d{2}):(\d{2})(?::(\d{2}))?$/.exec(time[0].value);
-        if(!d||!t){if(date[0].value||time[0].value)invalidTimes.add(id);continue;}const v=new Date(+d[3],+d[1]-1,+d[2],+t[1],+t[2],+(t[3]||0));
-        if(v.getFullYear()===+d[3]&&v.getMonth()===+d[1]-1&&v.getDate()===+d[2]&&v.getHours()===+t[1]&&v.getMinutes()===+t[2]&&+t[1]<24&&+t[2]<60&&+(t[3]||0)<60)next[id]=v.getTime();else invalidTimes.add(id);
-      }times=next;
-    }catch(e){times={};}
-    finally{if(opener&&url===location.href&&inputs().length)opener.click();}
-  }
   function procedureTiming(name){
     const scene=times['29335'],depart=times['29337'],patient=times['29336'];let value,source;
     if(name==='Moving a patient to a stretcher'){
@@ -62,13 +45,13 @@
       if(value!=null&&patient!=null&&value<patient)throw Error('Stretcher time precedes patient contact.');
       if(value!=null&&times['29338']!=null&&value>times['29338'])throw Error('Stretcher time is after destination arrival.');
     }else {value=patient;source='Arrived at Patient';}
-    if(value==null)throw Error('Required timeline timestamp missing or invalid; no current-time fallback.');
+    if(value==null)throw Error('Required timeline timestamp: '+missingTimes(name==='Moving a patient to a stretcher'?['29335','29337']:['29336']));
     return {value:localStamp(value),source};
   }
   const visible=n=>!!n&&n.isConnected&&!!n.getClientRects().length;
   const norm=x=>String(x??'').trim();
   function reset(){reviewed=null;$('#apply').disabled=busy;}
-  function resolve(root,path,ko){let n=root;for(const p of path.split('.')){n=ko.unwrap(n);if(n==null||!(p in Object(n)))throw Error('Native field path unavailable.');n=n[p];}return n;}
+  function resolve(root,path,ko){let n=root;if(!path)return n;for(const p of path.split('.')){n=ko.unwrap(n);if(n==null||!(p in Object(n)))throw Error('Native field path unavailable.');n=n[p];}return n;}
   function inspect(choice){
     const app=window.imagetrend,ko=window.ko;let c=choice;
     if(!app?.runForm?.PresetValueViewModel||!ko?.contextFor)throw Error('Native preset API is unavailable in this userscript context. No changes made.');
@@ -84,7 +67,8 @@
     if(statuses.some(Boolean)||document.querySelector('#center-pane.locked, #left-pane.locked'))throw Error('Chart is locked.');
     const targetContexts=contexts.filter(ctx=>ko.unwrap(ctx.$data?.BindingPathEntryID)===c.id);
     if(targetContexts.some(ctx=>app.FormComposer.isReadOnly(ctx)))throw Error('Target field is read-only.');
-    if(c.label==='Type of Service Requested')throw Error('Needs attention: priority-dependent service rule requires native priority mapping.');
+    if(PRIORITY_FIELDS.has(c.id))c=priorityChoice(c);
+    if(c.problem)throw Error(c.problem);
 
     const captured=ENTRY_PATHS[c.id];
     const repeated=captured&&/^Incident.Scene.Response.Patient.(Vitals|PatientProcedures)\[\]\./.test(captured);
@@ -115,7 +99,7 @@
       if(template.IsInGrid||typeof path!=='string'||!path.startsWith('Incident.')||(path.match(/\[\]/g)||[]).length>(template.IsMultiselect?1:0))throw Error('Needs attention: unsupported repeated-entry mapping.');
     }
     if(c.problem)throw Error(c.problem);
-    if(c.time&&!c.target)throw Error('Required timeline timestamp missing or invalid.');
+    if(c.time&&!c.target)throw Error('Required timeline timestamp: '+missingTimes(['29338']));
     const resources=app.formComposer.agencyResources?.[c.id.toLowerCase()];
     const special=c.label==='ECG Interpretation'&&c.target==='Not Applicable';
     const requested=c.targets||[c.target];
@@ -150,7 +134,7 @@
     const current=(c.time||c.input)?norm(answers[0]):norm(ko.unwrap(vm.currentValueDisplay)),target=(c.time||c.input)?c.target:norm(ko.unwrap(vm.presetValueDisplay));
     if(!target||target!==norm(c.target))throw Error('Native preset could not translate the target code to a display value.');
     // The native multiselect writer removes all entries, so only an empty collection is eligible.
-    const canApply=repeated?current!==target:!current&&(c.multi?collection.length===0:answers.every(value=>value==null||value===''));
+    const canApply=(repeated||PRIORITY_FIELDS.has(c.id))?current!==target:!current&&(c.multi?collection.length===0:answers.every(value=>value==null||value===''));
     if(repeated&&!c.multi&&!c.time){
       const raw=answers[3]??answers[0]??answers[1]??answers[2];
       const display=raw==null?'':norm([...(resources?.Elements||[]),...(resources?.NotValues||[]),...(resources?.PertinentNegatives||[])].find(x=>x.Id===raw)?.Value??raw);
@@ -209,11 +193,155 @@
   const delays=[['a7f8dd77-6a81-580f-9b55-43325de410c0','Response Delay','ResponseDelays[].ResponseDelayDelayReasonModValue.DelayReason'],['b8e1199a-3d25-5c25-9d50-25743474a17d','Scene Delay','SceneDelays[].SceneDelayDelayReasonModValue.DelayReason'],['3ecd70cc-229a-541b-993c-60d0928e963c','Transport Delay','TransportDelays[].TransportDelayDelayReasonModValue.DelayReason'],['6f0ddd39-647d-5bbc-a963-19a0bbf7fb9a','Destination Delay','TurnAroundDelays[].TurnAroundDelayDelayReasonModValue.DelayReason']];
   delays.forEach(([id,,path])=>ENTRY_PATHS[id]='Incident.Scene.Response.'+path);
   function localStamp(value){const d=new Date(value);if(!Number.isFinite(d.getTime()))throw Error('Invalid timestamp.');const p=n=>String(n).padStart(2,'0');return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`;}
+  const PRIORITY_FIELDS=new Set(['a5db14f5-8f30-5131-937c-912204f5151d','c1aa0ea5-0ad9-52d7-9170-4f0a725c2699','9c627521-8b03-58e4-b7ee-7d57e7ecd0cc']);
+  Object.assign(ENTRY_PATHS,{
+    'a5db14f5-8f30-5131-937c-912204f5151d':'Incident.Scene.Response.TypeOfServiceRequested',
+    'c1aa0ea5-0ad9-52d7-9170-4f0a725c2699':'Incident.Scene.Response.ResponseModeToScene',
+    '9c627521-8b03-58e4-b7ee-7d57e7ecd0cc':'Incident.Scene.Response.ResponseModes[].ResponseModeResponseModeModValue.ResponseMode',
+    '3cf8b9c0-7cf5-5581-a1b4-0a6ec9de735e':'Incident.Scene.Response.PrimaryRoleOfUnit'
+  });
+  choices.push({id:'c1aa0ea5-0ad9-52d7-9170-4f0a725c2699',label:'Response Mode to Scene'});
+  function priorityChoice(c){
+    const value=window.ko.unwrap(resolve(currentRoot(),'Incident.Scene.Response.DispatchPriority',window.ko));
+    const codes=['DispatchPriorityLevel_Priority1Critical','DispatchPriorityLevel_Priority2Emergent','DispatchPriorityLevel_Priority3LowerAcuity','DispatchPriorityLevel_Priority4NonAcuteegScheduledTransferorStandby','DispatchPriorityLevel_Priority5'];
+    const priority=codes.indexOf(value)+1;
+    if(!priority)throw Error('Dispatch Priority is missing or unsupported; response mode and service require review.');
+    let target;
+    if(c.id==='a5db14f5-8f30-5131-937c-912204f5151d'){
+      if(priority>2)throw Error('Priority '+priority+': confirm transfer/service type manually; no service assumption applied.');
+      target='Emergency Response (Primary Response Area)';
+    }else if(c.id==='c1aa0ea5-0ad9-52d7-9170-4f0a725c2699')target=priority===1?'With Lights and Sirens':'Without Lights and Sirens';
+    else {
+      target=priority===1?'Lights and Sirens':'No Lights or Sirens';
+      const ko=window.ko,list=ko.unwrap(resolve(currentRoot(),ENTRY_PATHS[c.id].split('[]')[0],ko));
+      if(!Array.isArray(list))throw Error('Response descriptors collection unavailable.');
+      const resources=window.imagetrend.formComposer.agencyResources?.[c.id]?.Elements||[];
+      const retained=[];
+      for(const entry of list){
+        const mod=ko.unwrap(entry.ResponseModeResponseModeModValue),code=ko.unwrap(mod?.PlusOneCode)||ko.unwrap(mod?.ResponseMode);
+        const matches=resources.filter(x=>x.Id===code);
+        if(matches.length!==1)throw Error('Existing response descriptor is unknown; review before replacing.');
+        const label=matches[0].Value;
+        if(!['Lights and Sirens','No Lights or Sirens'].includes(label))retained.push(label);
+      }
+      if(retained.length)return {...c,target,targets:[...new Set([...retained,target])],prioritySource:value};
+    }
+    return {...c,target,prioritySource:value};
+  }
+  const TIME_LABELS={
+    '29331':'Unit Notified by Dispatch','29332':'Unit En Route Date/Time',
+    '29335':'Unit Arrived on Scene','29336':'Arrived at Patient',
+    '29337':'Unit Left Scene','29338':'Arrived at Destination','29342':'Unit Back in Service'
+  };
+  function timePair(node){
+    if(!node)return null;
+    const region=node.closest('.grid-flyout-active')||document;
+    const prefix=node.id.replace(/(Date|Time)$/,'');
+    let date=[...region.querySelectorAll('input')].filter(n=>n.id===prefix+'Date'&&visible(n));
+    let time=[...region.querySelectorAll('input')].filter(n=>n.id===prefix+'Time'&&visible(n));
+    if(date.length===1&&time.length===1)return {date:date[0],time:time[0]};
+    for(let parent=node.parentElement;parent&&parent!==document.body;parent=parent.parentElement){
+      const inputs=[...parent.querySelectorAll('input')].filter(n=>visible(n)&&n.type!=='hidden');
+      if(inputs.length>2)break;
+      if(inputs.length===2&&inputs.includes(node))return {date:inputs[0],time:inputs[1]};
+    }
+    return null;
+  }
+  function timelinePair(id){
+    const clean=x=>String(x||'').replace(/[\u200B-\u200D\uFEFF]/g,'').replace(/\s+/g,' ').trim().replace(/:$/,'');
+    const labels=[...document.querySelectorAll('label,span,div')].filter(n=>visible(n)&&n.children.length===0&&clean(n.textContent)===TIME_LABELS[id]);
+    const pairs=[];
+    for(const label of labels){
+      for(let p=label.parentElement;p&&p!==document.body;p=p.parentElement){
+        const inputs=[...p.querySelectorAll('input')].filter(n=>visible(n)&&n.type!=='hidden');
+        if(inputs.length>2)break;
+        if(inputs.length===2){pairs.push({date:inputs[0],time:inputs[1]});break;}
+      }
+    }
+    const unique=pairs.filter((p,i)=>pairs.findIndex(q=>q.date===p.date)===i);
+    if(unique.length===1)return unique[0];
+    if(unique.length>1)throw Error(TIME_LABELS[id]+': multiple visible timestamp controls.');
+    const dates=[...document.querySelectorAll('input')].filter(n=>n.id===id+'Date'&&visible(n));
+    return dates.length===1?timePair(dates[0]):null;
+  }
+  function parseWallTime(date,time){
+    const d=/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/.exec(date.trim()),t=/^(\d{1,2}):(\d{2})(?::(\d{2}))?$/.exec(time.trim());
+    if(!d||!t)return null;
+    const v=new Date(+d[3],+d[1]-1,+d[2],+t[1],+t[2],+(t[3]||0));
+    return v.getFullYear()===+d[3]&&v.getMonth()===+d[1]-1&&v.getDate()===+d[2]&&v.getHours()===+t[1]&&v.getMinutes()===+t[2]&&+(t[3]||0)<60?v.getTime():null;
+  }
+  let timelineError='';
+  async function readTimes(){
+    const ids=Object.keys(TIME_LABELS),url=location.href;let opener=null;
+    times={};invalidTimes=new Set();timelineError='';
+    const loaded=()=>ids.some(id=>timelinePair(id));
+    try{
+      if(!loaded()){
+        opener=document.querySelector('#response-times-tool')||[...document.querySelectorAll('[title],button,a')].find(n=>visible(n)&&(n.title==='Times'||n.textContent.trim()==='Times'));
+        if(!opener)throw Error('Times opener not found; open Times and run again.');
+        opener.click();
+        for(let i=0;i<40&&!loaded();i++)await new Promise(r=>setTimeout(r,100));
+      }
+      if(url!==location.href||!loaded())throw Error('Response Times did not load.');
+      // Wait for bound values to settle, not merely for the panel container to appear.
+      let last='',stable=0;
+      for(let i=0;i<20;i++){
+        const now=JSON.stringify(ids.map(id=>{const p=timelinePair(id);return p?[p.date.value,p.time.value]:null;}));
+        stable=now===last?stable+1:0;last=now;
+        if(stable>=2)break;await new Promise(r=>setTimeout(r,100));
+      }
+      if(url!==location.href)throw Error('Chart changed while reading Times.');
+      for(const id of ids){const pair=timelinePair(id);if(!pair)continue;const v=parseWallTime(pair.date.value,pair.time.value);if(v!=null)times[id]=v;else if(pair.date.value||pair.time.value)invalidTimes.add(id);}
+    }catch(e){times={};timelineError=e.message;}
+    finally{if(opener&&url===location.href){try{if(loaded())opener.click();}catch(_){/* retain the read error */}}}
+  }
+  function missingTimes(ids){return ids.filter(id=>times[id]==null).map(id=>TIME_LABELS[id]+(invalidTimes.has(id)?' (invalid)':' (not read)')).join(', ')+(timelineError?' — '+timelineError:'');}
+  async function writeTimePair(pair,stamp,shortcut){
+    const {date,time}=pair;
+    if(!date.isConnected||!time.isConnected||date.disabled||time.disabled||date.readOnly||time.readOnly)throw Error('Timestamp is not writable.');
+    const expected=new Date(stamp),p=n=>String(n).padStart(2,'0');
+    const values=[`${p(expected.getMonth()+1)}/${p(expected.getDate())}/${expected.getFullYear()}`,`${p(expected.getHours())}:${p(expected.getMinutes())}:${p(expected.getSeconds())}`];
+    if(!Number.isFinite(expected.getTime()))throw Error('Invalid planned timestamp.');
+    if(parseWallTime(date.value,time.value)===expected.getTime())return;
+    date.focus();date.click();await new Promise(r=>setTimeout(r,100));
+    const picker=document.getElementById('date-picker');
+    if(shortcut&&visible(picker)){
+      const button=[...picker.querySelectorAll('.time-button')].find(n=>n.querySelector('.time-button-label')?.textContent.trim()===shortcut.label);
+      if(!button||button.classList.contains('disabled'))throw Error('Native '+shortcut.label+' shortcut unavailable.');
+      button.click();await new Promise(r=>setTimeout(r,100));
+      if(shortcut.minutes){
+        const minute=picker.querySelector('.minute .minus-button');
+        if(!minute)throw Error('Native minute adjustment unavailable.');
+        for(let i=0;i<shortcut.minutes;i++)minute.click();
+      }
+    }else{
+      for(const [i,input] of [date,time].entries()){
+        Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(input,values[i]);
+        for(const type of ['input','change','blur'])input.dispatchEvent(new Event(type,{bubbles:true}));
+      }
+    }
+    await new Promise(r=>setTimeout(r,150));
+    if(parseWallTime(date.value,time.value)!==expected.getTime())throw Error('Native timestamp read-back differs from '+values.join(' ')+'. Inspect the open entry.');
+    if(visible(picker))picker.querySelector('.header .close')?.click();
+  }
+  async function writeReviewedTime(fresh){
+    const beforeFly=[...document.querySelectorAll('.grid-flyout-active')].find(visible);
+    const field=await openIssue(fresh.c,true);
+    if(!field)throw Error('Timestamp field could not be opened.');
+    if(location.href!==fresh.url||currentRoot()!==fresh.root)throw Error('Chart changed before timestamp write.');
+    const date=[...field.querySelectorAll('input')].find(n=>/Date$/.test(n.id));
+    const pair=timePair(date);if(!pair)throw Error('Timestamp date/time controls unavailable.');
+    const shortcut=fresh.c.entry?(procedureName(fresh.c.entry)==='Moving a patient to a stretcher'?null:{label:'Patient Arrival'}):{label:'Destination Arrival',minutes:5};
+    await writeTimePair(pair,fresh.target,shortcut);
+    const fly=field.closest('.grid-flyout-active');
+    if(fly&&!beforeFly){const ok=fly.querySelector('button[data-bind*="okButtonClickHandler"]');if(!ok||ok.disabled||ok.classList.contains('disabled'))throw Error('Timestamp updated; entry OK unavailable.');ok.click();await new Promise(r=>setTimeout(r,150));if(visible(fly))throw Error('Timestamp entry did not close.');}
+  }
+
   function delayChoices(){
     const interval=(a,b)=>times[a]==null||times[b]==null?null:(times[b]-times[a])/1000;
     return delays.flatMap(([id,label],i)=>{
       const seconds=i===0?interval('29331','29332'):i===1?interval('29335','29337'):i===3?interval('29338','29342'):0;
-      if(seconds==null||seconds<0)return [{id,label,problem:'Missing or invalid timeline interval; review manually.'}];
+      if(seconds==null||seconds<0)return [{id,label,problem:'Missing or invalid timeline interval: '+missingTimes(i===0?['29331','29332']:i===1?['29335','29337']:['29338','29342'])}];
       if(i===0)return seconds>120?[{id,label,target:'Staff Delay'}]:[];
       if(i===1)return seconds<=1200?[{id,label,target:'None/No Delay'}]:[{id,label,problem:'Scene exceeds 20 minutes; select the reason manually.'}];
       if(i===2)return [{id,label,target:'None/No Delay'}];
@@ -233,7 +361,7 @@
       seen.delete(value);return out;
     }
     const data=copy(ko.unwrap(root.Incident));if(!data||!Object.keys(data).length)throw Error('Local capture has no incident data; no writes allowed.');
-    const payload=JSON.stringify({schema:1,version:'0.2.4.10',reason,url:location.href,capturedAt:new Date().toISOString(),incident:data});
+    const payload=JSON.stringify({schema:1,version:'0.2.4.11',reason,url:location.href,capturedAt:new Date().toISOString(),incident:data});
     // One latest snapshot per tab, retained only for this browser session. No network export.
     const key='it-a15-before-run';sessionStorage.setItem(key,payload);
     if(sessionStorage.getItem(key)!==payload)throw Error('Local capture verification failed; no writes allowed.');
@@ -250,8 +378,10 @@
     const known=sessionStorage.getItem('it-a15-assessment-path');
     return known?.startsWith(patientPrefix)&&!known.slice(patientPrefix.length).includes('.')&&patient[known.slice(patientPrefix.length)]?[known.slice(patientPrefix.length)]:[];
   }
-  async function openIssue(c){
-    if(busy)return;
+  async function openIssue(c,internal=false){
+    if(busy&&!internal)return;
+    if(c.create)c={...c,id:'aa6d315f-ccbc-58c0-950e-2e0932ee67b6'};
+    if(c.assessment)c={...c,id:'8e916322-32f6-582f-8ad2-69a689c49b0c'};
     const find=()=>[...document.querySelectorAll('[id]')].filter(n=>{if(n.id!==c.id||!visible(n))return false;if(!c.entry)return true;const ctx=window.ko.contextFor(n);return [ctx?.$data,...(ctx?.$parents||[])].includes(c.entry);});
     let fields=find();
     if(fields.length!==1){
@@ -262,7 +392,7 @@
       fields=find();
     }
     if(fields.length!==1){$('#status').textContent='Open '+(c.entryLabel||c.label)+' manually; the exact field could not be located.';return;}
-    fields[0].scrollIntoView({block:'center'});fields[0].style.outline='3px solid #eac65c';fields[0].querySelector('input,button,select')?.focus();setTimeout(()=>fields[0].style.outline='',3500);
+    fields[0].scrollIntoView({block:'center'});fields[0].style.outline='3px solid #eac65c';fields[0].querySelector('input,button,select')?.focus();setTimeout(()=>fields[0].style.outline='',3500);return fields[0];
   }
   function showIssues(items){const box=$('#issues'),issueUrl=location.href;box.replaceChildren();const seen=new Set();for(const x of items.filter(x=>x.error)){const key=[x.c.entryLabel,x.c.label,x.error].join('|');if(seen.has(key))continue;seen.add(key);const row=document.createElement('div'),link=document.createElement('button');link.textContent=(x.c.entryLabel?x.c.entryLabel+' · ':'')+x.c.label+' — Open field';link.onclick=()=>{if(location.href!==issueUrl){$('#status').textContent='Chart changed; run a new review for this chart.';return;}return openIssue(x.c);};const why=document.createElement('small');why.textContent=x.error;row.append(link,why);box.append(row);}if(box.children.length)setTally(true);}
 
@@ -435,8 +565,7 @@
       const plannedTime = name === 'Moving a patient to a stretcher' ? timing.stretcher : timing.arrival;
       if (JSON.stringify(currentTiming) !== JSON.stringify(plannedTime)) throw new Error('Timeline changed during bundle.');
       const inputs = procedureTimeInputs(f);
-      nativeSetInput(inputs.date, plannedTime.date);
-      nativeSetInput(inputs.time, plannedTime.time);
+      await writeTimePair(inputs,procedureTiming(name).value,name==='Moving a patient to a stretcher'?null:{label:'Patient Arrival'});
       await sleep(150);
       if (norm(inputs.date.value) !== plannedTime.date || norm(inputs.time.value) !== plannedTime.time)
         throw new Error('ImageTrend did not confirm procedure time.');
@@ -481,9 +610,7 @@
     if (grids.length !== 1) throw new Error('Open Treatment → Procedures & Medications first.');
     const grid = grids[0];
     if (norm(grid.querySelector('.grid-label')?.textContent) !== 'Procedures') throw new Error('Procedures grid identity did not match.');
-    const lists = grid.querySelectorAll('.grid-item-display');
-    if (!lists.length)
-      throw new Error('Procedures already exist or list is unavailable. Open an existing entry to review; automatic Add requires an empty list.');
+    // creationPlan checks the native collection. An empty grid may have no rendered rows.
     if ([...grid.querySelectorAll('button.grid-filter')].some(b => !b.classList.contains('grid-button-highlighted')))
       throw new Error('Show all procedure filters before adding.');
     const buttons = [...grid.querySelectorAll('.grid-actions button.grid-button')].filter(visible)
@@ -634,8 +761,14 @@
       const expected=[plan.target,localStamp(times['29338']??0)];
       for(let i=0;i<entries.length;i++){
         check();if(collection().length!==entries.length||collection().some((x,j)=>x!==entries[j]))throw Error('Assessment entries changed.');
-        const exact=binding.replace('[]','.'+ordered[i].index);if(Date.parse(ko.unwrap(resolve(plan.root,exact,ko)))===Date.parse(expected[i]))continue;const vm=new window.imagetrend.runForm.PresetValueViewModel({BindingPathEntryID:id,BindingPathFromOrigin:exact,ReportingStandardID:window.imagetrend.formComposer.reportingStandardID,IsInGrid:false,IsMultiselect:false,IsNotValue:false,IsPertinentNegative:false,Value:expected[i]},plan.root);
-        vm.applyPresetValue();if(Date.parse(ko.unwrap(resolve(plan.root,exact,ko)))!==Date.parse(expected[i]))throw Error('Assessment '+(i+1)+' timestamp verification failed.');
+        const rowTargets=[...grid.querySelectorAll('[data-bind]')].filter(x=>visible(x)&&/click\s*:/.test(x.dataset.bind||'')&&/grid\.(?:open|edit)\w*\s*\(/i.test(x.dataset.bind||'')&&!/delete|remove|add/i.test(x.dataset.bind||''));
+        const rows=rowTargets.filter(x=>!rowTargets.some(y=>y!==x&&x.contains(y)));
+        if(rows.length!==entries.length)throw Error('Assessment rows changed.');
+        rows[ordered[i].index].click();const active=await wait(()=>[...document.querySelectorAll('.grid-flyout-active')].find(visible));
+        const pair=timePair(active.querySelector('input[id$="25415Date"]'));if(!pair)throw Error('Assessment time controls unavailable.');
+        await writeTimePair(pair,expected[i],{label:i?'Destination Arrival':'Patient Arrival'});
+        const ok=active.querySelector('button[data-bind*="okButtonClickHandler"]');if(!ok||ok.disabled||ok.classList.contains('disabled'))throw Error('Assessment OK unavailable.');
+        ok.click();await wait(()=>!visible(active));
       }
       return 'Assessment timestamps verified: first at patient contact'+(entries.length===2?', second at destination':'')+'. Findings preserved.';
     }
@@ -646,26 +779,25 @@
     if(!date||!time||date.disabled||time.disabled)throw Error('Assessment date/time fields unavailable; inspect the open entry.');
     const dt=new Date(plan.target),pad=x=>String(x).padStart(2,'0');
     const values=[`${pad(dt.getMonth()+1)}/${pad(dt.getDate())}/${dt.getFullYear()}`,`${pad(dt.getHours())}:${pad(dt.getMinutes())}:${pad(dt.getSeconds())}`];
-    for(const [i,input] of [date,time].entries()){Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(input,values[i]);input.dispatchEvent(new Event('input',{bubbles:true}));input.dispatchEvent(new Event('change',{bubbles:true}));input.dispatchEvent(new Event('blur',{bubbles:true}));}
-    if(date.value!==values[0]||time.value!==values[1])throw Error('Assessment timestamp was not accepted. Inspect the open entry.');
+    await writeTimePair({date,time},plan.target,{label:'Patient Arrival'});
     const dateDef=ko.contextFor(date)?.$data,newBinding=ko.unwrap(dateDef?.BindingPath)||ko.unwrap(dateDef?.BindingPathFromOrigin);
     if(!newBinding?.startsWith(path+'[].'))throw Error('Assessment timestamp mapping unavailable before acceptance.');
     check();const ok=fly.querySelector('button[data-bind*="okButtonClickHandler"]');
     if(!ok||ok.disabled||ok.classList.contains('disabled'))throw Error('Assessment OK unavailable.');
     ok.click();await wait(()=>!visible(fly)||!fly.isConnected);
     if(collection().length!==1)throw Error('Assessment entry count not verified. Inspect before retrying.');
-    if(Date.parse(ko.unwrap(resolve(plan.root,newBinding.replace('[]','.0'),ko)))!==Date.parse(plan.target))throw Error('Assessment timestamp failed post-close verification.');
+    if(!ko.unwrap(resolve(plan.root,newBinding.replace('[]','.0'),ko)))throw Error('Assessment timestamp missing after close.');
     return 'Assessment/Exam created at patient contact; no findings were entered.';
   }
   $('#launch').onclick=()=>{$('section').hidden=false;$('#launch').hidden=true;};
   $('#hide').onclick=()=>setTally(!$('#tally').open);
   $('#preview').onclick=async()=>{
-    if(busy)return;busy=true;$('#preview').disabled=true;await readTimes();
+    if(busy)return;busy=true;$('#apply').disabled=true;$('#preview').disabled=true;reportProgress('Reading timeline…');await readTimes();
     reset();try{
       const selected=[...choices,...delayChoices(),{id:'9753adcb-f760-554b-94d6-60a5e82badd8',label:'Receiving Hospital Contacted',time:true,target:times['29338']==null?'':localStamp(times['29338']-300000)}];
       reviewed=selected.flatMap(expandChoice).map(c=>{try{return inspect(c);}catch(e){return {c,canApply:false,error:e.message};}});
-      try{const creation=creationPlan();if(creation)reviewed.push(creation);}catch(e){reviewed.push({c:{label:'Create missing procedures',target:'A15'},error:e.message,canApply:false});}
-      try{const assessment=assessmentPlan();if(assessment)reviewed.push(assessment);}catch(e){reviewed.push({c:{label:'Assessment/Exam',target:'Patient contact timestamp'},error:e.message,canApply:false});}
+      try{const creation=creationPlan();if(creation)reviewed.push(creation);}catch(e){reviewed.push({c:{create:true,label:'Create missing procedures',target:'A15'},error:e.message,canApply:false});}
+      try{const assessment=assessmentPlan();if(assessment)reviewed.push(assessment);}catch(e){reviewed.push({c:{assessment:true,label:'Assessment/Exam',target:'Patient contact timestamp'},error:e.message,canApply:false});}
       $('#result').textContent=reviewed.map(x=>x.error?(x.c.entryLabel?x.c.entryLabel+' · ':'')+x.c.label+' → '+x.c.target+'\n'+x.error:(x.c.entryLabel?x.c.entryLabel+' · ':'')+x.c.label+'\nCurrent: '+(x.current||'(blank)')+' → '+x.target+(x.c.source?' ('+x.c.source+')':'')+'\n'+(x.canApply?(x.current?'Ready — replace with reviewed A15 value':'Ready'):x.current===x.target?'Already correct':'Existing answer preserved')).join('\n\n');
     setTally(reviewed.some(x=>x.error));
     }catch(e){reset();$('#result').textContent=e.message;setTally(true);}finally{busy=false;$('#preview').disabled=false;$('#apply').disabled=false;}
@@ -678,27 +810,30 @@
     await $('#preview').onclick();
     if(!reviewed)return;
     busy=true;$('#apply').disabled=true;$('#preview').disabled=true;$('#stop').disabled=false;
-    const results=[],issues=[],completed=new Set();let queue=[...reviewed],skipped=0;
+    const results=[],issues=[],completed=new Set();let queue=[...reviewed],skipped=0,applied=0,runError="";
     const key=c=>c.id+'|'+(c.entryLabel||c.label);
     try{
       for(let pass=0;pass<3&&queue.length&&!stopRequested;pass++){
-        const retry=[];let progress=0;
+        const retry=[];let progress=0,checked=0;reportProgress(pass?'Recovery pass '+pass:'Applying A15',0,queue.length);
         for(const old of queue){
           if(stopRequested)break;
           if(location.href!==url||currentRoot()!==root)throw Error('Chart changed. Run stopped.');
-          let fresh,wrote=false;
+          let fresh,wrote=false;reportProgress(old.c.entryLabel||old.c.label,checked++,queue.length);
+          await new Promise(r=>setTimeout(r,0));
           try{
             if(old.c.create||old.c.assessment){
               if(old.error){issues.push(old);continue;}
               if(old.c.create){await createReviewed(old);results.push('Created missing A15 procedures');}
               else results.push(await createAssessment(old));
-              progress++;continue;
+              progress++;applied++;continue;
             }
             fresh=inspect(old.c);
             if(!fresh.canApply){skipped++;continue;}
             if(old.snapshot&&fresh.snapshot!==old.snapshot)throw Error('Answer changed during run; preserved for review.');
             if(completed.has(key(fresh.c)))continue;
-            wrote=true;fresh.vm.applyPresetValue();
+            wrote=true;
+            if(fresh.c.time){await writeReviewedTime(fresh);completed.add(key(fresh.c));results.push('Verified native timestamp: '+fresh.c.label);progress++;applied++;continue;}
+            fresh.vm.applyPresetValue();
             if(fresh.c.id==='16ccfb92-ef4d-5527-a0ee-39639fd222f4'){
               const path=patientPrefix+'Disposition.HospitalTeamActivations',list=window.ko.unwrap(resolve(root,path,window.ko));
               if(list.length!==1)throw Error('Activation count not verified.');
@@ -715,23 +850,24 @@
               await new Promise(r=>setTimeout(r,100));
             }
             if(!verified)throw Error('Write was attempted but read-back failed; inspect before retrying.');
-            completed.add(key(fresh.c));results.push('Verified: '+(fresh.c.entryLabel||'')+' '+fresh.c.label);progress++;
+            completed.add(key(fresh.c));results.push('Verified: '+(fresh.c.entryLabel||'')+' '+fresh.c.label);progress++;applied++;
           }catch(e){
             const item={...old,error:e.message};
             // Only missing mappings/options may heal. Never replay an attempted write or creation.
             if(!wrote&&!old.c.create&&!old.c.assessment&&/unavailable|missing|no loaded|not translate/i.test(e.message)&&!/ambiguous|read-only|locked|changed|timeline/i.test(e.message))retry.push(item);else issues.push(item);
           }
-          $('#status').textContent=results.length+' applied · '+(issues.length+retry.length)+' need attention'+(pass?' · healing pass '+(pass+1):'');
+          $('#status').textContent=applied+' applied · '+(issues.length+retry.length)+' need attention'+(pass?' · healing pass '+(pass+1):'');
         }
         if(!retry.length)break;
         if(!progress||pass===2){issues.push(...retry);break;}
+        results.push('Recovery: '+retry.length+' pending fields will be checked again after prerequisite changes.');
         queue=retry;await new Promise(r=>setTimeout(r,200));
       }
       $('#result').textContent=results.join('\n')+(stopRequested?'\nStopped after current step; unprocessed work remains.':'')+'\n'+groupedIssues(issues);
-      $('#status').textContent=results.length+' applied · '+skipped+' kept · '+issues.length+' need attention'+(stopRequested?' · stopped':'');
+      $('#status').textContent=applied+' applied · '+skipped+' kept · '+issues.length+' need attention'+(stopRequested?' · stopped':'');
       showIssues(issues);setTally(issues.length>0||stopRequested);
-    }catch(e){$('#result').textContent=results.join('\n')+'\nStopped: '+e.message;setTally(true);}
-    finally{busy=false;reset();$('#preview').disabled=false;$('#stop').disabled=true;}
+    }catch(e){runError=e.message;$('#result').textContent=results.join('\n')+'\nStopped: '+e.message;setTally(true);}
+    finally{if(runError||stopRequested)reportProgress(runError?'Stopped: '+runError:'Stopped',undefined,undefined,runError?'error':'stopped');else reportProgress(issues.length?'Finished - review issues':'Finished',1,1,issues.length?'attention':'done');busy=false;reset();$('#preview').disabled=false;$('#stop').disabled=true;}
   };
 
   const capture=document.createElement('button');capture.textContent='Copy field mappings';capture.id='capture';
@@ -870,11 +1006,21 @@
   const summary=document.createElement('summary');summary.textContent='Expand details';
   const issues=document.createElement('div');issues.id='issues';tally.append(summary,issues,$('#result'));
   const status=document.createElement('p');status.id='status';status.setAttribute('role','status');status.textContent='Ready · A15';
+  const progressBox=document.createElement('div');progressBox.id='run-progress';progressBox.hidden=true;
+  progressBox.innerHTML='<label id="progress-label" for="progress-bar" role="status"></label><progress id="progress-bar" max="100" value="0"></progress>';
+  function reportProgress(label,done,total,state='working'){
+    progressBox.hidden=false;progressBox.dataset.state=state;const bar=progressBox.querySelector('progress');
+    if(Number.isFinite(done)&&Number.isFinite(total)){bar.value=total?Math.min(100,Math.round(done/total*100)):100;}
+    else if(state==='working')bar.removeAttribute('value');
+    else if(!bar.hasAttribute('value'))bar.value=0;
+    progressBox.querySelector('label').textContent=label+(Number.isFinite(total)?' · '+Math.round(bar.value)+'%':'');
+    bar.setAttribute('aria-valuetext',label);
+  }
   const controls=document.createElement('div');controls.id='top-controls';
   $('section').append(controls);
   $('#profile').innerHTML='<label for="profile-select">Profile</label><select id="profile-select"><option>A15</option></select>';
   const stop=document.createElement('button');stop.id='stop';stop.textContent='Stop after current step';stop.disabled=true;stop.onclick=()=>{stopRequested=true;stop.disabled=true;};
-  controls.append($('#profile'),$('#apply'),$('#apply-note'),stop);
+  controls.append($('#profile'),$('#apply'),progressBox,$('#apply-note'),stop);
   $('#apply').disabled=false;$('#apply').setAttribute('aria-describedby','apply-note');
   const shortcuts=document.createElement('div');shortcuts.className='shortcuts';
   let target=null;
@@ -885,7 +1031,7 @@
       try{
         if(!t||!t.node.isConnected||t.url!==location.href)throw Error('Focus the destination date/time field first.');
         const prefix=t.id.replace(/(Date|Time)$/,''),scope=t.node.closest('.date-time,.control,.single-row-control')||t.node.parentElement;
-        const date=scope.querySelector('[id="'+prefix+'Date"]'),time=scope.querySelector('[id="'+prefix+'Time"]');
+        const pair=timePair(t.node),date=pair?.date,time=pair?.time;
         if(!date||!time||date.disabled||time.disabled||date.readOnly||time.readOnly)throw Error('Writable date/time pair not recognized.');
         const root=currentRoot(),before=[date.value,time.value];await readTimes();
         if(times[id]==null)throw Error('Source timeline time unavailable.');
@@ -911,4 +1057,5 @@
   effects.textContent+=`:host{color:#eee8f6}section{background:#20212a;border-color:#aa76d0;max-height:82vh;width:390px}h3{color:#e1c0fa}h3 #hide{float:right;border-radius:50%;padding:4px 9px}button,select{background:#30313e;color:#f4edf8;border:1px solid #65576f;border-radius:7px}button:hover{border-color:#c5a0e5}#apply{display:block;width:100%;font-weight:700;background:#8851ac;padding:13px}#preview,#capture{font-size:12px}#profile label{margin:8px 0 0}#top-controls{position:sticky;top:-16px;background:#20212a;padding:8px 0;z-index:1}#apply-note{font-size:11px;color:#c4bbcf}.shortcuts{display:flex;gap:8px}.shortcuts button{flex:1}#status{font-size:12px;color:#ddc6ee}pre{background:#292631;color:#ddd3e5}#issues>div{border-left:3px solid #e9be62;padding:6px;background:#34302b;margin:7px 0}#issues button{text-align:left;text-decoration:underline;color:#ffe0a0;border:0;background:none}footer{display:flex;justify-content:flex-end;gap:12px;flex-wrap:wrap;border-top:1px solid #514359;margin-top:12px;padding-top:8px}footer small{width:100%}#launch{background:#20212a;color:#e1c0fa;border-radius:20px}#tally summary{cursor:pointer;padding:10px 0}.nuke-dialog{background:#20212a;color:white}.nuke-cover{z-index:2147483647}`;
   effects.textContent+=' section{display:flex;flex-direction:column;overflow:hidden;max-height:calc(100vh - 130px)}#top-controls{position:static;flex-shrink:0}#tally{min-height:35px;overflow:auto}footer{flex-shrink:0}#profile{margin:4px 0}#profile label{margin:2px 0}#status{margin:6px 0}#issues small{margin:3px 0}section>small{font-size:11px}';
 
+  effects.textContent+='#progress-bar{width:100%;height:10px;accent-color:#bb87dc}#progress-label{font-size:12px;margin:5px 0}#run-progress[data-state="error"] progress{accent-color:#ed8989}#run-progress[data-state="done"] progress{accent-color:#73c799}';
 })();
