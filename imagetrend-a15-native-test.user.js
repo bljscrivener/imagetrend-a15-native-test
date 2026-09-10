@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         ImageTrend A15 Native Test (experimental)
 // @namespace    local.imagetrend.a15native
-// @version      0.2.4.7
+// @version      0.2.4.8
 // @description  Isolated, reviewed native preset field experiment. A15 defaults through native preset mappings; test release.
 // @match        https://pafford.imagetrendelite.com/Elite/Organizationpafford/Agencypmsmsboliv/EmsRunForm*
 // @updateURL    https://raw.githubusercontent.com/bljscrivener/imagetrend-a15-native-test/main/imagetrend-a15-native-test.user.js
@@ -18,7 +18,7 @@
   const host=document.createElement('div');host.id='it-a15-native-test';
   host.style.cssText='position:fixed;right:24px;top:90px;z-index:2147483646';
   const ui=host.attachShadow({mode:'open'});
-  ui.innerHTML='<style>:host{font:14px system-ui;color:#253144}section{background:white;border:2px solid #864ca3;border-radius:12px;padding:16px;width:440px;max-width:85vw;max-height:70vh;overflow:auto;box-shadow:0 8px 24px #0004}button,select{font:inherit;padding:8px;margin:5px 0}select{width:100%}pre{white-space:pre-wrap;font:12px system-ui;background:#f4edf8;padding:9px}label{display:block;margin:10px 0}h3{margin:0}small{display:block;margin:8px 0}button{cursor:pointer}#apply{background:#864ca3;color:white;border:0;border-radius:5px}button:disabled{opacity:.45}[hidden]{display:none!important}</style><button id="launch">A15 Native Test</button><section hidden><h3>A15 Native Test · experimental 0.2.4.7</h3><small>Use on your TEST chart. Native field updates may persist immediately. This does not call the preset audit or chart Save.</small><p id="profile"><strong>Profile: A15</strong></p><button id="preview">Preview A15 changes</button><pre id="result">Review from any chart section. All mapped A15 defaults are selected; unavailable fields are listed for attention.</pre><label><input id="ack" type="checkbox">This is a TEST chart. All ready values match this scenario. I reviewed replacements in every vital/procedure entry.</label><button id="apply" disabled>Go, baby, go</button> <button id="hide">Minimize</button></section>';
+  ui.innerHTML='<style>:host{font:14px system-ui;color:#253144}section{background:white;border:2px solid #864ca3;border-radius:12px;padding:16px;width:440px;max-width:85vw;max-height:70vh;overflow:auto;box-shadow:0 8px 24px #0004}button,select{font:inherit;padding:8px;margin:5px 0}select{width:100%}pre{white-space:pre-wrap;font:12px system-ui;background:#f4edf8;padding:9px}label{display:block;margin:10px 0}h3{margin:0}small{display:block;margin:8px 0}button{cursor:pointer}#apply{background:#864ca3;color:white;border:0;border-radius:5px}button:disabled{opacity:.45}[hidden]{display:none!important}</style><button id="launch">A15 Native Test</button><section hidden><h3>A15 Native Test · experimental 0.2.4.8</h3><small>Use on your TEST chart. Native field updates may persist immediately. This does not call the preset audit or chart Save.</small><p id="profile"><strong>Profile: A15</strong></p><button id="preview">Preview A15 changes</button><pre id="result">Review from any chart section. All mapped A15 defaults are selected; unavailable fields are listed for attention.</pre><small id="apply-note">Go, baby, go applies supported A15 defaults. Use only when they match the care provided. You remain responsible for chart accuracy and final review.</small><button id="apply" disabled>Go, baby, go</button> <button id="hide">Minimize</button></section>';
   document.body.append(host);
   const $=s=>ui.querySelector(s);let reviewed=null,busy=false;
   const ENTRY_PATHS={"8a6e1556-e16f-516e-9f09-2a01527a24ba":"Incident.Scene.Response.Patient.Vitals","53af0886-1a17-576c-b77d-d64b3a7a930a":"Incident.Scene.Response.Patient.Vitals[].VitalsVitalsDateTimeModValue.VitalsDateTime","3ecad398-beca-5784-94f0-217e4bf92db7":"Incident.Scene.Response.Patient.Vitals[].VitalsObtainedPriorToEMSCareModValue.ObtainedPriorToEMSCare","8375d602-dcd5-5c1a-83e1-ceda50c7410c":"Incident.Scene.Response.Patient.Vitals[].VitalsCrewMemberIDModValue.LicensureID","7f5c88af-a3be-5947-b47b-ffe6cc957102":"Incident.Scene.Response.Patient.Vitals[].VitalsLevelOfResponseModValue.LevelOfResponse","94f6e43f-139c-5eda-bd46-bdb95d7111bd":"Incident.Scene.Response.Patient.Vitals[].VitalsGCSEyeModValue.GCSEye","30b5cc8f-c8c4-5446-a140-df8017828842":"Incident.Scene.Response.Patient.Vitals[].VitalsGCSVerbalModValue.GCSVerbal","de69b8e0-ea97-5898-af28-163665df5d03":"Incident.Scene.Response.Patient.Vitals[].VitalsGCSMotorModValue.GCSMotor","d6db496e-fd74-5d8a-a016-e324072dcb9c":"Incident.Scene.Response.Patient.Vitals[].GCSQualifiers[].GCSQualifierGCSQualifierModValue.GCSQualifier","4fcdbba5-c769-5176-b37b-64db2f5aff94":"Incident.Scene.Response.Patient.Vitals[].VitalsGCSTotalModValue.GCSTotal","b0258daa-3a9c-5a0d-8f6d-629891c26562":"Incident.Scene.Response.Patient.Vitals[].VitalsSBPModValue.SBP","6fd0cdf7-f71a-50a9-b02a-5819f40e356a":"Incident.Scene.Response.Patient.Vitals[].VitalsDBPModValue.DBP","0dcf3d4f-f98d-53c9-a042-3bd73e6104d9":"Incident.Scene.Response.Patient.Vitals[].VitalsBPMethodModValue.BPMethod","37500c2a-2a78-53d2-9559-78c75eda9cb3":"Incident.Scene.Response.Patient.Vitals[].BPLocation","08dee948-3a33-5983-b74f-fe5823ae94a0":"Incident.Scene.Response.Patient.Vitals[].MeanArterialPressure","8d1b6f04-cc37-5ee1-85f7-9619cfb05873":"Incident.Scene.Response.Patient.Vitals[].VitalsPulseRateModValue.PulseRate","189b8c3d-3285-5066-b469-296a5c87d922":"Incident.Scene.Response.Patient.Vitals[].PulseRateMethod","946f201d-2126-5b9a-b73c-b6a098c254da":"Incident.Scene.Response.Patient.Vitals[].VitalsRespiratoryRateModValue.RespiratoryRate","1ac08c15-b252-5b17-bdd5-990dfb81b475":"Incident.Scene.Response.Patient.Vitals[].RespiratoryEffort","d4b32d81-fc1e-544f-aeba-77e176cac505":"Incident.Scene.Response.Patient.Vitals[].RespiratoryRegularity","76e7fb24-9a8f-51e9-8dfb-bdf1144ef197":"Incident.Scene.Response.Patient.Vitals[].VitalsPulseOximetryModValue.PulseOximetry","98cd8d07-762f-5665-9bef-e9b908b6d9dd":"Incident.Scene.Response.Patient.Vitals[].PulseOximetryQualifier","d892f99f-5dcc-5abb-b2fe-8a0d1935e581":"Incident.Scene.Response.Patient.Vitals[].VitalsCarbonDioxideModValue.CarbonDioxide","01975843-3408-5a00-b45b-79e64e0db108":"Incident.Scene.Response.Patient.Vitals[].VitalsCarbonDioxideModValue.Unit","84dd4a6f-18ce-51e2-a00c-1e54d1c31ead":"Incident.Scene.Response.Patient.Vitals[].VitalsBloodGlucoseModValue.BloodGlucose","7bea3862-f196-567b-b9e9-9239b9f103e8":"Incident.Scene.Response.Patient.Vitals[].VitalsBodyTemperatureCModValue.BodyTemperatureC","73e8899f-058f-5144-88f3-1c1640cb7a7d":"Incident.Scene.Response.Patient.Vitals[].TemperatureMethod","42cf38a8-8380-571b-93d4-392a3183d47c":"Incident.Scene.Response.Patient.Vitals[].VitalsPainScoreModValue.PainScore","37a26280-090a-5d8d-b95d-c6c950839a6f":"Incident.Scene.Response.Patient.Vitals[].VitalsPainScaleTypeModValue.PainScaleType","10388fca-facb-5673-87e2-e109f28bd064":"Incident.Scene.Response.Patient.Vitals[].VitalsStrokeScoreModValue.StrokeScore","408ab322-147e-5539-afaf-2062d143a55c":"Incident.Scene.Response.Patient.Vitals[].VitalsStrokeScaleTypeModValue.StrokeScaleType","ee0c31ce-9274-5df2-a435-95915e6e2ddb":"Incident.Scene.Response.Patient.Vitals[].RichmondAgitationSedationScale","5c02d626-6c37-5418-bb6e-696df46b3ef0":"Incident.Scene.Response.Patient.Vitals[].VitalsAPGARModValue.APGAR","59cd95c4-0496-546f-8c53-4b21bf9ff965":"Incident.Scene.Response.Patient.Vitals[].VitalsThrombolyticScreenModValue.ThrombolyticScreen","5ef095a7-a0ef-5d0b-9dcf-6a12ce47f85f":"Incident.Scene.Response.Patient.Vitals[].VitalsECGTypeModValue.ECGType","fc93d071-9efc-5ce9-a393-3507852a8e19":"Incident.Scene.Response.Patient.Vitals[].ECGCardiacRhythms[].ECGCardiacRhythmCardiacRhythmModValue.CardiacRhythm","50afd178-e284-59dd-a4f8-463af0acfad3":"Incident.Scene.Response.Patient.Vitals[].ECGInterpretations[].ECGInterpretationInterpretationMethodModValue.InterpretationMethod","1b57645d-c521-5d46-a400-5a67aaec7aad":"Incident.Scene.Response.Patient.Vitals[].VitalsWaveforms","c9b0b483-c98e-5a08-bd18-89a337374339":"Incident.Scene.Response.Patient.ProtocolUseds","915663be-bec8-5dc5-b2ae-e1901f5ade04":"Incident.Scene.Response.Patient.ProtocolUseds[].ProtocolUsedProtocolModValue.Protocol","51af94d0-e421-5002-af47-2539205ff625":"Incident.Scene.Response.Patient.ProtocolUseds[].ProtocolUsedProtocolAgeCategoryModValue.ProtocolAgeCategory","aa6d315f-ccbc-58c0-950e-2e0932ee67b6":"Incident.Scene.Response.Patient.PatientProcedures","231489ba-6c9e-5e78-a52b-40b13e6bcc26":"Incident.Scene.Response.Patient.PatientProcedures[].PatientProcedureProcedureDateTimeModValue.ProcedureDateTime","c07c1d8b-c7d4-5a5a-8ec1-01bf67f882e0":"Incident.Scene.Response.Patient.PatientProcedures[].PatientProcedurePriorToEMSUnitCareModValue.PriorToEMSUnitCare","31eb2248-cb52-f111-b7ac-b38df619f2c6":"Incident.Scene.Response.Patient.PatientProcedures[].SupplementalQuestions.31eb2248-cb52-f111-b7ac-b38df619f2c6","03581536-da9b-562c-9229-8a29353b5f40":"Incident.Scene.Response.Patient.PatientProcedures[].PatientProcedureCrewMemberIDModValue.LicensureID","9d0465df-a31c-f111-88a8-cdf828d6164c":"Incident.Scene.Response.Patient.PatientProcedures[].SupplementalQuestions.9d0465df-a31c-f111-88a8-cdf828d6164c","d0c37cfb-ac96-5c0e-9eb6-d21aeb3f57d7":"Incident.Scene.Response.Patient.PatientProcedures[].PatientProcedurePerformerRoleModValue.PerformerRole","6a3cd763-c562-574c-b209-bbced74d73c1":"Incident.Scene.Response.Patient.PatientProcedures[].ProcedureAuthorization","02dffd5f-4c68-506b-881d-5b00c78090aa":"Incident.Scene.Response.Patient.PatientProcedures[].PatientProcedureProcedurePerformedModValue.ProcedurePerformed","14775b1d-c505-5161-b7c9-7c9ea3c56cc4":"Incident.Scene.Response.Patient.PatientProcedures[].SizeOfEquipment","7f9c5ed0-8a4e-5f82-be4b-c6139be2f60a":"Incident.Scene.Response.Patient.PatientProcedures[].PatientProcedureProcedureLocationModValue.ProcedureLocation","342287d1-d2df-5bc9-bc3a-572db35c10bb":"Incident.Scene.Response.Patient.PatientProcedures[].PatientProcedureVascularAccessLocationModValue.VascularAccessLocation","536eb7cc-2c34-58bc-994b-c46c6e5ee80f":"Incident.Scene.Response.Patient.PatientProcedures[].LaryngoscopeBladeProcedure","73a818d0-5b75-5cbf-911a-114f70d294e5":"Incident.Scene.Response.Patient.PatientProcedures[].PatientProcedureNumberOfAttemptsModValue.NumberOfAttempt","adcc71b8-0b92-5387-8b9f-cb94b729e4ac":"Incident.Scene.Response.Patient.PatientProcedures[].PatientProcedureProcedureSuccessfulModValue.ProcedureSuccessful","9cb81cbd-eb5d-5516-aacd-1a75a68e99a2":"Incident.Scene.Response.Patient.PatientProcedures[].PatientProcedureComplications[].PatientProcedureComplicationProcedureComplicationModValue.ProcedureComplication","5d094507-a437-5112-8f16-58d56704dc7c":"Incident.Scene.Response.Patient.PatientProcedures[].PatientProcedurePatientResponseModValue.PatientResponse","21fff6b7-0787-5a85-91f4-3b6ec40cc2fa":"Incident.Scene.Response.Patient.PatientProcedures[].ProcedureComment","c432c124-8bd9-ef11-bfc8-001dd8b72ccf":"Incident.SupplementalQuestions.c432c124-8bd9-ef11-bfc8-001dd8b72ccf","417e9589-a07e-5982-8cec-7893618b9f83":"Incident.Scene.Response.Patient.Medications"};
@@ -66,7 +66,7 @@
   }
   const visible=n=>!!n&&n.isConnected&&!!n.getClientRects().length;
   const norm=x=>String(x??'').trim();
-  function reset(){reviewed=null;$('#ack').checked=false;$('#apply').disabled=true;}
+  function reset(){reviewed=null;$('#apply').disabled=busy;}
   function resolve(root,path,ko){let n=root;for(const p of path.split('.')){n=ko.unwrap(n);if(n==null||!(p in Object(n)))throw Error('Native field path unavailable.');n=n[p];}return n;}
   function inspect(choice){
     const app=window.imagetrend,ko=window.ko;let c=choice;
@@ -554,7 +554,7 @@
     return 'Assessment/Exam created at patient contact; no findings were entered.';
   }
   $('#launch').onclick=()=>{$('section').hidden=false;$('#launch').hidden=true;};
-  $('#hide').onclick=()=>{$('section').hidden=true;$('#launch').hidden=false;};
+  $('#hide').onclick=()=>setTally(!$('#tally').open);
   $('#preview').onclick=async()=>{
     if(busy)return;busy=true;$('#preview').disabled=true;await readTimes();
     reset();try{
@@ -563,11 +563,13 @@
       try{const creation=creationPlan();if(creation)reviewed.push(creation);}catch(e){reviewed.push({c:{label:'Create missing procedures',target:'A15'},error:e.message,canApply:false});}
       try{const assessment=assessmentPlan();if(assessment)reviewed.push(assessment);}catch(e){reviewed.push({c:{label:'Assessment/Exam',target:'Patient contact timestamp'},error:e.message,canApply:false});}
       $('#result').textContent=reviewed.map(x=>x.error?(x.c.entryLabel?x.c.entryLabel+' · ':'')+x.c.label+' → '+x.c.target+'\n'+x.error:(x.c.entryLabel?x.c.entryLabel+' · ':'')+x.c.label+'\nCurrent: '+(x.current||'(blank)')+' → '+x.target+(x.c.source?' ('+x.c.source+')':'')+'\n'+(x.canApply?(x.current?'Ready — replace with reviewed A15 value':'Ready'):x.current===x.target?'Already correct':'Existing answer preserved')).join('\n\n');
-    }catch(e){reset();$('#result').textContent=e.message;}finally{busy=false;$('#preview').disabled=false;}
+    setTally(reviewed.some(x=>x.error));
+    }catch(e){reset();$('#result').textContent=e.message;setTally(true);}finally{busy=false;$('#preview').disabled=false;$('#apply').disabled=false;}
   };
-  $('#ack').onchange=()=>{$('#apply').disabled=busy||!$('#ack').checked||!reviewed?.some(x=>x.canApply);};
   $('#apply').onclick=async()=>{
-    if(busy||!reviewed?.some(x=>x.canApply)||!$('#ack').checked)return;
+    if(busy)return;
+    await $('#preview').onclick();
+    if(!reviewed?.some(x=>x.canApply))return;
     busy=true;$('#apply').disabled=true;$('#preview').disabled=true;
     const results=[];
     try{
@@ -597,7 +599,7 @@
       }
       $('#result').textContent=results.join('\n')+'\n'+groupedIssues(reviewed)+'\nVisit the fields to verify their displays. No explicit Save or preset audit called; native persistence may occur.';
     }catch(e){$('#result').textContent=results.join('\n')+'\nStopped: '+e.message+'\nEarlier writes may remain. Preview again after inspecting.';}
-    finally{busy=false;reset();$('#preview').disabled=false;}
+    finally{setTally(/Stopped:/.test($('#result').textContent)||!!reviewed?.some(x=>x.error));busy=false;reset();$('#preview').disabled=false;}
   };
   const capture=document.createElement('button');capture.textContent='Copy field mappings';capture.id='capture';
   const captureStatus=document.createElement('small');captureStatus.id='capture-status';
@@ -699,11 +701,24 @@
       for(const x of snapshot){x.value.removeAll();if(ko.unwrap(x.value).length)throw Error('Removal not verified for '+x.key+'. Earlier removals may remain.');}
       for(const x of fields){if(location.href!==url||!unlocked())throw Error('Chart changed during clearing. Earlier removals may remain.');x.vm.applyPresetValue();if(x.read().some(v=>v!=null&&v!==''))throw Error('Clear not verified: '+x.label+'. Earlier removals may remain.');}
       $('#result').textContent='Cleared '+snapshot.map(x=>x.items.length+' '+x.key).join(', ')+' and '+fields.length+' mapped fields. Dispatch/timeline preserved; unmapped fields remain. Native persistence may occur.';
-      Object.keys(sessionStorage).filter(k=>k.startsWith('it-a15-create:'+url+':')).forEach(k=>sessionStorage.removeItem(k));celebrateClear();
-    }catch(e){$('#result').textContent='Clear stopped: '+e.message;}finally{busy=false;}
+      Object.keys(sessionStorage).filter(k=>k.startsWith('it-a15-create:'+url+':')).forEach(k=>sessionStorage.removeItem(k));celebrateClear();setTally(false);
+    }catch(e){$('#result').textContent='Clear stopped: '+e.message;setTally(true);}finally{busy=false;}
   };
   const rims=document.createElement('span');rims.className='rims';rims.setAttribute('aria-hidden','true');rims.textContent=' ⚙';$('h3').append(rims);
   effects.textContent+=' .rims{display:inline-block;color:#864ca3}:host([data-working]) .rims{animation:rims 1s linear infinite}@keyframes rims{to{transform:rotate(360deg)}}@media(prefers-reduced-motion:reduce){.rims{animation:none!important}}';
   for(const button of [$('#preview'),$('#apply'),clearButton]){const run=button.onclick;button.onclick=async event=>{if(busy)return;host.setAttribute('data-working','');try{await run(event);}finally{host.removeAttribute('data-working');}};}
+
+  // Keep the review controls visible without requiring a scroll through the tally.
+  const tally=document.createElement('details');tally.id='tally';
+  const summary=document.createElement('summary');summary.textContent='Tally / review details';tally.append(summary,$('#result'));$('section').append(tally);
+  const controls=document.createElement('div');controls.id='top-controls';
+  controls.append($('#apply-note'));
+  $('#apply').disabled=false;
+  $('#apply').setAttribute('aria-describedby','apply-note');
+  const actions=document.createElement('div');actions.className='top-actions';actions.append($('#apply'),$('#hide'),clearButton);controls.append(actions);
+  $('#profile').after(controls);$('#hide').textContent='Expand';$('#hide').setAttribute('aria-controls','tally');$('#hide').setAttribute('aria-expanded','false');
+  tally.ontoggle=()=>{$('#hide').textContent=tally.open?'Collapse':'Expand';$('#hide').setAttribute('aria-expanded',String(tally.open));};
+  function setTally(open){tally.open=!!open;$('#hide').textContent=open?'Collapse':'Expand';$('#hide').setAttribute('aria-expanded',String(!!open));}
+  effects.textContent+=' #top-controls{position:sticky;top:-16px;background:white;padding:8px 0;z-index:1}.top-actions{display:flex;gap:6px;flex-wrap:wrap}.top-actions button{margin:0}#tally summary{cursor:pointer;padding:8px 0}';
 
 })();
