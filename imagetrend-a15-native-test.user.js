@@ -1,9 +1,9 @@
 // ==UserScript==
 // @name         Gremlin Logic A15
 // @namespace    local.imagetrend.a15native
-// @version      0.2.4.11
+// @version      0.2.4.12
 // @description  Gremlin Logic A15: native defaults, local pre-run capture, bounded recovery and linked issues. A15 chart workflow.
-// @match        https://pafford.imagetrendelite.com/Elite/Organizationpafford/Agencypmsmsboliv/EmsRunForm*
+// @match        https://*.imagetrendelite.com/Elite/*/EmsRunForm*
 // @updateURL    https://raw.githubusercontent.com/bljscrivener/imagetrend-a15-native-test/main/imagetrend-a15-native-test.user.js
 // @downloadURL  https://raw.githubusercontent.com/bljscrivener/imagetrend-a15-native-test/main/imagetrend-a15-native-test.user.js
 // @grant        none
@@ -18,7 +18,7 @@
   const host=document.createElement('div');host.id='it-a15-native-test';
   host.style.cssText='position:fixed;right:24px;top:90px;z-index:2147483646';
   const ui=host.attachShadow({mode:'open'});
-  ui.innerHTML='<style>:host{font:14px system-ui;color:#253144}section{background:white;border:2px solid #864ca3;border-radius:12px;padding:16px;width:440px;max-width:85vw;max-height:70vh;overflow:auto;box-shadow:0 8px 24px #0004}button,select{font:inherit;padding:8px;margin:5px 0}select{width:100%}pre{white-space:pre-wrap;font:12px system-ui;background:#f4edf8;padding:9px}label{display:block;margin:10px 0}h3{margin:0}small{display:block;margin:8px 0}button{cursor:pointer}#apply{background:#864ca3;color:white;border:0;border-radius:5px}button:disabled{opacity:.45}[hidden]{display:none!important}</style><button id="launch">Gremlin Logic A15</button><section hidden><h3>Gremlin Logic · A15 0.2.4.11</h3><small>A15 chart workflow. Changes may persist immediately; chart Save remains yours.</small><p id="profile"><strong>Profile: A15</strong></p><button id="preview">Preview A15 changes</button><pre id="result">Review from any chart section. All mapped A15 defaults are selected; unavailable fields are listed for attention.</pre><small id="apply-note">Go, baby, go applies supported A15 defaults. Use only when they match the care provided. You remain responsible for chart accuracy and final review.</small><button id="apply" disabled>Go, baby, go</button> <button id="hide">Minimize</button></section>';
+  ui.innerHTML='<style>:host{font:14px system-ui;color:#253144}section{background:white;border:2px solid #864ca3;border-radius:12px;padding:16px;width:440px;max-width:85vw;max-height:70vh;overflow:auto;box-shadow:0 8px 24px #0004}button,select{font:inherit;padding:8px;margin:5px 0}select{width:100%}pre{white-space:pre-wrap;font:12px system-ui;background:#f4edf8;padding:9px}label{display:block;margin:10px 0}h3{margin:0}small{display:block;margin:8px 0}button{cursor:pointer}#apply{background:#864ca3;color:white;border:0;border-radius:5px}button:disabled{opacity:.45}[hidden]{display:none!important}</style><button id="launch">Gremlin Logic A15</button><section hidden><h3>Gremlin Logic · A15 0.2.4.12</h3><small>A15 chart workflow. Changes may persist immediately; chart Save remains yours.</small><p id="profile"><strong>Profile: A15</strong></p><button id="preview">Preview A15 changes</button><pre id="result">Review from any chart section. All mapped A15 defaults are selected; unavailable fields are listed for attention.</pre><small id="apply-note">Go, baby, go applies supported A15 defaults. Use only when they match the care provided. You remain responsible for chart accuracy and final review.</small><button id="apply" disabled>Go, baby, go</button> <button id="hide">Minimize</button></section>';
   document.body.append(host);
   const $=s=>ui.querySelector(s);let reviewed=null,busy=false;
   const ENTRY_PATHS={"8a6e1556-e16f-516e-9f09-2a01527a24ba":"Incident.Scene.Response.Patient.Vitals","53af0886-1a17-576c-b77d-d64b3a7a930a":"Incident.Scene.Response.Patient.Vitals[].VitalsVitalsDateTimeModValue.VitalsDateTime","3ecad398-beca-5784-94f0-217e4bf92db7":"Incident.Scene.Response.Patient.Vitals[].VitalsObtainedPriorToEMSCareModValue.ObtainedPriorToEMSCare","8375d602-dcd5-5c1a-83e1-ceda50c7410c":"Incident.Scene.Response.Patient.Vitals[].VitalsCrewMemberIDModValue.LicensureID","7f5c88af-a3be-5947-b47b-ffe6cc957102":"Incident.Scene.Response.Patient.Vitals[].VitalsLevelOfResponseModValue.LevelOfResponse","94f6e43f-139c-5eda-bd46-bdb95d7111bd":"Incident.Scene.Response.Patient.Vitals[].VitalsGCSEyeModValue.GCSEye","30b5cc8f-c8c4-5446-a140-df8017828842":"Incident.Scene.Response.Patient.Vitals[].VitalsGCSVerbalModValue.GCSVerbal","de69b8e0-ea97-5898-af28-163665df5d03":"Incident.Scene.Response.Patient.Vitals[].VitalsGCSMotorModValue.GCSMotor","d6db496e-fd74-5d8a-a016-e324072dcb9c":"Incident.Scene.Response.Patient.Vitals[].GCSQualifiers[].GCSQualifierGCSQualifierModValue.GCSQualifier","4fcdbba5-c769-5176-b37b-64db2f5aff94":"Incident.Scene.Response.Patient.Vitals[].VitalsGCSTotalModValue.GCSTotal","b0258daa-3a9c-5a0d-8f6d-629891c26562":"Incident.Scene.Response.Patient.Vitals[].VitalsSBPModValue.SBP","6fd0cdf7-f71a-50a9-b02a-5819f40e356a":"Incident.Scene.Response.Patient.Vitals[].VitalsDBPModValue.DBP","0dcf3d4f-f98d-53c9-a042-3bd73e6104d9":"Incident.Scene.Response.Patient.Vitals[].VitalsBPMethodModValue.BPMethod","37500c2a-2a78-53d2-9559-78c75eda9cb3":"Incident.Scene.Response.Patient.Vitals[].BPLocation","08dee948-3a33-5983-b74f-fe5823ae94a0":"Incident.Scene.Response.Patient.Vitals[].MeanArterialPressure","8d1b6f04-cc37-5ee1-85f7-9619cfb05873":"Incident.Scene.Response.Patient.Vitals[].VitalsPulseRateModValue.PulseRate","189b8c3d-3285-5066-b469-296a5c87d922":"Incident.Scene.Response.Patient.Vitals[].PulseRateMethod","946f201d-2126-5b9a-b73c-b6a098c254da":"Incident.Scene.Response.Patient.Vitals[].VitalsRespiratoryRateModValue.RespiratoryRate","1ac08c15-b252-5b17-bdd5-990dfb81b475":"Incident.Scene.Response.Patient.Vitals[].RespiratoryEffort","d4b32d81-fc1e-544f-aeba-77e176cac505":"Incident.Scene.Response.Patient.Vitals[].RespiratoryRegularity","76e7fb24-9a8f-51e9-8dfb-bdf1144ef197":"Incident.Scene.Response.Patient.Vitals[].VitalsPulseOximetryModValue.PulseOximetry","98cd8d07-762f-5665-9bef-e9b908b6d9dd":"Incident.Scene.Response.Patient.Vitals[].PulseOximetryQualifier","d892f99f-5dcc-5abb-b2fe-8a0d1935e581":"Incident.Scene.Response.Patient.Vitals[].VitalsCarbonDioxideModValue.CarbonDioxide","01975843-3408-5a00-b45b-79e64e0db108":"Incident.Scene.Response.Patient.Vitals[].VitalsCarbonDioxideModValue.Unit","84dd4a6f-18ce-51e2-a00c-1e54d1c31ead":"Incident.Scene.Response.Patient.Vitals[].VitalsBloodGlucoseModValue.BloodGlucose","7bea3862-f196-567b-b9e9-9239b9f103e8":"Incident.Scene.Response.Patient.Vitals[].VitalsBodyTemperatureCModValue.BodyTemperatureC","73e8899f-058f-5144-88f3-1c1640cb7a7d":"Incident.Scene.Response.Patient.Vitals[].TemperatureMethod","42cf38a8-8380-571b-93d4-392a3183d47c":"Incident.Scene.Response.Patient.Vitals[].VitalsPainScoreModValue.PainScore","37a26280-090a-5d8d-b95d-c6c950839a6f":"Incident.Scene.Response.Patient.Vitals[].VitalsPainScaleTypeModValue.PainScaleType","10388fca-facb-5673-87e2-e109f28bd064":"Incident.Scene.Response.Patient.Vitals[].VitalsStrokeScoreModValue.StrokeScore","408ab322-147e-5539-afaf-2062d143a55c":"Incident.Scene.Response.Patient.Vitals[].VitalsStrokeScaleTypeModValue.StrokeScaleType","ee0c31ce-9274-5df2-a435-95915e6e2ddb":"Incident.Scene.Response.Patient.Vitals[].RichmondAgitationSedationScale","5c02d626-6c37-5418-bb6e-696df46b3ef0":"Incident.Scene.Response.Patient.Vitals[].VitalsAPGARModValue.APGAR","59cd95c4-0496-546f-8c53-4b21bf9ff965":"Incident.Scene.Response.Patient.Vitals[].VitalsThrombolyticScreenModValue.ThrombolyticScreen","5ef095a7-a0ef-5d0b-9dcf-6a12ce47f85f":"Incident.Scene.Response.Patient.Vitals[].VitalsECGTypeModValue.ECGType","fc93d071-9efc-5ce9-a393-3507852a8e19":"Incident.Scene.Response.Patient.Vitals[].ECGCardiacRhythms[].ECGCardiacRhythmCardiacRhythmModValue.CardiacRhythm","50afd178-e284-59dd-a4f8-463af0acfad3":"Incident.Scene.Response.Patient.Vitals[].ECGInterpretations[].ECGInterpretationInterpretationMethodModValue.InterpretationMethod","1b57645d-c521-5d46-a400-5a67aaec7aad":"Incident.Scene.Response.Patient.Vitals[].VitalsWaveforms","c9b0b483-c98e-5a08-bd18-89a337374339":"Incident.Scene.Response.Patient.ProtocolUseds","915663be-bec8-5dc5-b2ae-e1901f5ade04":"Incident.Scene.Response.Patient.ProtocolUseds[].ProtocolUsedProtocolModValue.Protocol","51af94d0-e421-5002-af47-2539205ff625":"Incident.Scene.Response.Patient.ProtocolUseds[].ProtocolUsedProtocolAgeCategoryModValue.ProtocolAgeCategory","aa6d315f-ccbc-58c0-950e-2e0932ee67b6":"Incident.Scene.Response.Patient.PatientProcedures","231489ba-6c9e-5e78-a52b-40b13e6bcc26":"Incident.Scene.Response.Patient.PatientProcedures[].PatientProcedureProcedureDateTimeModValue.ProcedureDateTime","c07c1d8b-c7d4-5a5a-8ec1-01bf67f882e0":"Incident.Scene.Response.Patient.PatientProcedures[].PatientProcedurePriorToEMSUnitCareModValue.PriorToEMSUnitCare","31eb2248-cb52-f111-b7ac-b38df619f2c6":"Incident.Scene.Response.Patient.PatientProcedures[].SupplementalQuestions.31eb2248-cb52-f111-b7ac-b38df619f2c6","03581536-da9b-562c-9229-8a29353b5f40":"Incident.Scene.Response.Patient.PatientProcedures[].PatientProcedureCrewMemberIDModValue.LicensureID","9d0465df-a31c-f111-88a8-cdf828d6164c":"Incident.Scene.Response.Patient.PatientProcedures[].SupplementalQuestions.9d0465df-a31c-f111-88a8-cdf828d6164c","d0c37cfb-ac96-5c0e-9eb6-d21aeb3f57d7":"Incident.Scene.Response.Patient.PatientProcedures[].PatientProcedurePerformerRoleModValue.PerformerRole","6a3cd763-c562-574c-b209-bbced74d73c1":"Incident.Scene.Response.Patient.PatientProcedures[].ProcedureAuthorization","02dffd5f-4c68-506b-881d-5b00c78090aa":"Incident.Scene.Response.Patient.PatientProcedures[].PatientProcedureProcedurePerformedModValue.ProcedurePerformed","14775b1d-c505-5161-b7c9-7c9ea3c56cc4":"Incident.Scene.Response.Patient.PatientProcedures[].SizeOfEquipment","7f9c5ed0-8a4e-5f82-be4b-c6139be2f60a":"Incident.Scene.Response.Patient.PatientProcedures[].PatientProcedureProcedureLocationModValue.ProcedureLocation","342287d1-d2df-5bc9-bc3a-572db35c10bb":"Incident.Scene.Response.Patient.PatientProcedures[].PatientProcedureVascularAccessLocationModValue.VascularAccessLocation","536eb7cc-2c34-58bc-994b-c46c6e5ee80f":"Incident.Scene.Response.Patient.PatientProcedures[].LaryngoscopeBladeProcedure","73a818d0-5b75-5cbf-911a-114f70d294e5":"Incident.Scene.Response.Patient.PatientProcedures[].PatientProcedureNumberOfAttemptsModValue.NumberOfAttempt","adcc71b8-0b92-5387-8b9f-cb94b729e4ac":"Incident.Scene.Response.Patient.PatientProcedures[].PatientProcedureProcedureSuccessfulModValue.ProcedureSuccessful","9cb81cbd-eb5d-5516-aacd-1a75a68e99a2":"Incident.Scene.Response.Patient.PatientProcedures[].PatientProcedureComplications[].PatientProcedureComplicationProcedureComplicationModValue.ProcedureComplication","5d094507-a437-5112-8f16-58d56704dc7c":"Incident.Scene.Response.Patient.PatientProcedures[].PatientProcedurePatientResponseModValue.PatientResponse","21fff6b7-0787-5a85-91f4-3b6ec40cc2fa":"Incident.Scene.Response.Patient.PatientProcedures[].ProcedureComment","c432c124-8bd9-ef11-bfc8-001dd8b72ccf":"Incident.SupplementalQuestions.c432c124-8bd9-ef11-bfc8-001dd8b72ccf","417e9589-a07e-5982-8cec-7893618b9f83":"Incident.Scene.Response.Patient.Medications"};
@@ -100,7 +100,17 @@
     }
     if(c.problem)throw Error(c.problem);
     if(c.time&&!c.target)throw Error('Required timeline timestamp: '+missingTimes(['29338']));
-    const resources=app.formComposer.agencyResources?.[c.id.toLowerCase()];
+    // Resolve an agency-specific ID only from an exact structural path.
+    // Labels and ControlID alone never authorize a field substitution.
+    learnDefinitions();
+    const structural=[...(app.formComposer.agencyPresetValues||[]).flatMap(d=>d.PresetValues||[]),...learnedDefinitions.values()].filter(d=>d.ReportingStandardID===app.formComposer.reportingStandardID&&d.BindingPathFromOrigin===path);
+    const nativeIds=[...new Set(structural.map(d=>d.BindingPathEntryID))];
+    if(nativeIds.length>1)throw Error('Conflicting agency field identities.');
+    const nativeId=nativeIds[0]||template.BindingPathEntryID;
+    const nativeContexts=contexts.filter(ctx=>ko.unwrap(ctx.$data?.BindingPathEntryID)===nativeId);
+    if(nativeContexts.some(ctx=>app.FormComposer.isReadOnly(ctx)))throw Error('Target field is read-only.');
+    template={...template,BindingPathEntryID:nativeId};
+    const resources=app.formComposer.agencyResources?.[nativeId.toLowerCase()];
     const special=c.label==='ECG Interpretation'&&c.target==='Not Applicable';
     const requested=c.targets||[c.target];
     const matches=requested.map(target=>(c.time||c.input)?[{Id:target}]:(resources?.[special?'NotValues':'Elements']||[]).filter(e=>norm(e.Value)===norm(target)));
@@ -175,6 +185,8 @@
     }
   }
   const patientPrefix='Incident.Scene.Response.Patient.';
+  ENTRY_PATHS['2538b000-9d1a-52ab-9082-14aaa092730c']=patientPrefix+'PatientBarriers[].PatientBarrierBarrierModValue.Barrier';
+  ENTRY_PATHS['ae3afe47-5b10-5761-8ee0-db6094b90b5c']=patientPrefix+'Disposition.DispositionDestinationTypeModValue.DestinationType';
   Object.assign(ENTRY_PATHS,Object.fromEntries([
     ['a43e6fca-b6bd-5c15-b9f4-9afb7773582b','Disposition.DispositionNumberOfPatientsTransportedModValue.NumberOfPatientsTransported'],
     ['12e06449-632f-5f97-b454-ec747e814719','Disposition.DispositionEMSTransportMethodModValue.EMSTransportMethod'],
@@ -274,15 +286,16 @@
   async function readTimes(){
     const ids=Object.keys(TIME_LABELS),url=location.href;let opener=null;
     times={};invalidTimes=new Set();timelineError='';
-    const loaded=()=>ids.some(id=>timelinePair(id));
+    const loaded=()=>ids.every(id=>timelinePair(id));
+    const anyLoaded=()=>ids.some(id=>timelinePair(id));
     try{
       if(!loaded()){
         opener=document.querySelector('#response-times-tool')||[...document.querySelectorAll('[title],button,a')].find(n=>visible(n)&&(n.title==='Times'||n.textContent.trim()==='Times'));
-        if(!opener)throw Error('Times opener not found; open Times and run again.');
-        opener.click();
-        for(let i=0;i<40&&!loaded();i++)await new Promise(r=>setTimeout(r,100));
+        if(!opener&&!anyLoaded())throw Error('Times opener not found; open Times and run again.');
+        if(opener){opener.click();
+        for(let i=0;i<40&&!loaded();i++)await new Promise(r=>setTimeout(r,100));}
       }
-      if(url!==location.href||!loaded())throw Error('Response Times did not load.');
+      if(url!==location.href||!anyLoaded())throw Error('Response Times did not load.');
       // Wait for bound values to settle, not merely for the panel container to appear.
       let last='',stable=0;
       for(let i=0;i<20;i++){
@@ -293,7 +306,7 @@
       if(url!==location.href)throw Error('Chart changed while reading Times.');
       for(const id of ids){const pair=timelinePair(id);if(!pair)continue;const v=parseWallTime(pair.date.value,pair.time.value);if(v!=null)times[id]=v;else if(pair.date.value||pair.time.value)invalidTimes.add(id);}
     }catch(e){times={};timelineError=e.message;}
-    finally{if(opener&&url===location.href){try{if(loaded())opener.click();}catch(_){/* retain the read error */}}}
+    finally{if(opener&&url===location.href){try{if(anyLoaded())opener.click();}catch(_){/* retain the read error */}}}
   }
   function missingTimes(ids){return ids.filter(id=>times[id]==null).map(id=>TIME_LABELS[id]+(invalidTimes.has(id)?' (invalid)':' (not read)')).join(', ')+(timelineError?' — '+timelineError:'');}
   async function writeTimePair(pair,stamp,shortcut){
@@ -361,7 +374,7 @@
       seen.delete(value);return out;
     }
     const data=copy(ko.unwrap(root.Incident));if(!data||!Object.keys(data).length)throw Error('Local capture has no incident data; no writes allowed.');
-    const payload=JSON.stringify({schema:1,version:'0.2.4.11',reason,url:location.href,capturedAt:new Date().toISOString(),incident:data});
+    const payload=JSON.stringify({schema:1,version:'0.2.4.12',reason,url:location.href,capturedAt:new Date().toISOString(),incident:data});
     // One latest snapshot per tab, retained only for this browser session. No network export.
     const key='it-a15-before-run';sessionStorage.setItem(key,payload);
     if(sessionStorage.getItem(key)!==payload)throw Error('Local capture verification failed; no writes allowed.');
@@ -630,7 +643,7 @@
   async function addProcedureBundle(names,onProgress) {
     PROCEDURE_NAMES=names;
     const url = location.href;
-    if (!/\/Incident\d+\/Form42(?:$|[/?])/.test(location.hash)) throw new Error('Open a Form42 chart.');
+    if (!/\/Incident\d+\/Form\d+(?:$|[/?])/.test(location.hash)) throw new Error('Open an incident chart.');
     const storageKey = 'it-a15-create:' + url + ':' + names.join('|');
     // creationPlan has rechecked existing identities; an active populated flyout still blocks replay.
     if(stopRequested)throw Error('Stopped before procedure creation.');
@@ -721,7 +734,26 @@
       for(let i=0;i<30;i++){if(location.href!==plan.url)throw Error('Chart changed.');if([...document.querySelectorAll('[id="aa6d315f-ccbc-58c0-950e-2e0932ee67b6"]')].some(visible))return;await new Promise(r=>setTimeout(r,100));}throw Error('Procedure panel did not open.');
     };
     await clickPanel();if(currentRoot()!==plan.root)throw Error('Chart changed.');
-    await procedureWorkflow(plan.missing,n=>{$('#result').textContent='Created: '+n;});
+    let previous=null,stable=0;
+    for(let attempt=0;attempt<20&&stable<2;attempt++){
+      const entries=window.ko.unwrap(resolve(plan.root,'Incident.Scene.Response.Patient.PatientProcedures',window.ko));
+      if(!Array.isArray(entries))throw Error('Procedure collection unavailable.');
+      entries.forEach(procedureName);
+      stable=previous&&entries.length===previous.length&&entries.every((entry,i)=>entry===previous[i])?stable+1:0;
+      previous=[...entries];await new Promise(r=>setTimeout(r,150));
+    }
+    if(stable<2)throw Error('Procedure inventory did not settle.');
+    // Navigation may hydrate entries that were absent during the first scan.
+    // Recompute before every Add; never replay the original missing bundle.
+    for(const name of plan.missing){
+      if(location.href!==plan.url||currentRoot()!==plan.root)throw Error('Chart changed.');
+      const current=creationPlan();
+      if(!current||!current.missing.includes(name))continue;
+      if(procedureTiming(name).value!==plan.timing[plan.missing.indexOf(name)])throw Error('Timeline changed.');
+      await procedureWorkflow([name],n=>{$('#result').textContent='Created: '+n;});
+      const entries=window.ko.unwrap(resolve(plan.root,'Incident.Scene.Response.Patient.PatientProcedures',window.ko));
+      if(entries.filter(x=>procedureName(x)===name).length!==1)throw Error('Created procedure count not verified: '+name);
+    }
     const after=window.ko.unwrap(resolve(plan.root,'Incident.Scene.Response.Patient.PatientProcedures',window.ko));
     for(const name of plan.missing)if(after.filter(x=>procedureName(x)===name).length!==1)throw Error('Created procedure count not verified: '+name);
   }
@@ -913,8 +945,10 @@
   function nukeWarning(){return new Promise(done=>{
     const cover=document.createElement('div');cover.className='nuke-cover';
     cover.innerHTML='<div class="nuke-dialog" role="dialog" aria-modal="true" aria-labelledby="nuke-title"><div class="nuke-art"><img alt="Thumbs-up mascot watching a cartoon explosion" src="https://raw.githubusercontent.com/bljscrivener/imagetrend-a15-native-test/main/assets/clear-warning.png"></div><h3 id="nuke-title">This will nuke your chart, you good with that?</h3><p>Only the entries and fields listed in the first warning will be cleared. The helper cannot undo this.</p><button id="nuke-cancel">Cancel</button><button id="nuke-confirm">Yes, clear the listed data</button></div>';
-    const prior=ui.activeElement,finish=value=>{cover.remove();prior?.focus();done(value);};
-    cover.querySelector('#nuke-cancel').onclick=()=>finish(false);cover.querySelector('#nuke-confirm').onclick=()=>finish(true);
+    let settled=false;
+    const prior=ui.activeElement,finish=value=>{if(settled)return;settled=true;cover.remove();prior?.focus();done(value);};
+    cover.querySelectorAll('button').forEach(b=>b.type='button');
+    cover.querySelector('#nuke-cancel').onclick=e=>{e.preventDefault();e.stopPropagation();finish(false);};cover.querySelector('#nuke-confirm').onclick=e=>{e.preventDefault();e.stopPropagation();finish(true);};
     cover.onkeydown=e=>{if(e.key==='Escape'){e.preventDefault();finish(false);}if(e.key==='Tab'){e.preventDefault();const buttons=[...cover.querySelectorAll('button')];buttons[ui.activeElement===buttons[0]?1:0].focus();}};
     attachArtFallback(cover);ui.append(cover);cover.querySelector('#nuke-cancel').focus();
   });}
@@ -945,8 +979,9 @@
         if(contexts.some(c=>app.FormComposer.isReadOnly(c)))throw Error('Target is read-only.');
         const duplicates=clearDefinitions().filter(x=>x.BindingPathFromOrigin===path);if(new Set(duplicates.map(x=>JSON.stringify([x.BindingPathEntryID,!!x.IsMultiselect]))).size>1)throw Error('Conflicting clear definitions.');
         const before=read();if(!before.some(x=>x!=null&&x!==''))continue;
-        const vm=new app.runForm.PresetValueViewModel({...d,Value:null,IsNotValue:false,IsPertinentNegative:false},root);
-        if(!byPath.has(path))byPath.set(path,{label:choice?.label||d.FieldName||'Transport field',read,before,vm});
+        // Defer native construction as well as execution until both confirmations.
+        const apply=()=>new app.runForm.PresetValueViewModel({...d,Value:null,IsNotValue:false,IsPertinentNegative:false},root).applyPresetValue();
+        if(!byPath.has(path))byPath.set(path,{label:choice?.label||d.FieldName||'Transport field',read,before,apply});
       }catch(e){clearProblems.push((d.FieldName||path)+': '+e.message);}
     }
     return [...byPath.values()];
@@ -964,15 +999,8 @@
       const path='Incident.Scene.Response.Patient',roots=owners.filter(o=>{try{return !!resolve(o,path,ko);}catch(_){return false;}});
       if(roots.length!==1)throw Error('Patient context ambiguous.');
       const patient=ko.unwrap(resolve(roots[0],path,ko)),url=location.href;
-      // Load definition metadata for the requested clear scope before showing its exact inventory.
-      if(!document.querySelector('.grid-flyout-active')){
-        for(const [section,title] of [['STAT Info','STAT Info'],['Transport/Refusal','Transport Info'],['Assessment','Assessment/Exam']]){
-          const parent=document.querySelector('.section[title="'+section+'"]');if(!parent)continue;
-          parent.click();await new Promise(r=>setTimeout(r,150));const panel=document.querySelector('.panel[title="'+title+'"]');
-          if(panel){panel.click();await new Promise(r=>setTimeout(r,200));learnDefinitions();}
-          if(location.href!==url||!unlocked())throw Error('Chart changed while inspecting clear scope.');
-        }
-      }
+      // Inventory is read-only: do not navigate or construct native preset writers here.
+      learnDefinitions();
       const entries=['Vitals','PatientProcedures','ProtocolUseds','Medications',...assessmentCollectionKeys(patient)].map(key=>({key,value:patient[key],items:ko.unwrap(patient[key])}));
       const eligible=entries.filter(x=>Array.isArray(x.items)&&x.items.length);
       for(const entry of eligible){
@@ -987,13 +1015,13 @@
       busy=true;
       if(!window.confirm('Clear these entries and mapped STAT/Transport fields?\n'+snapshot.map(x=>x.key+': '+x.items.length).concat(fields.map(x=>x.label)).join('\n')+'\nDispatch information and timeline timestamps are preserved. Unmapped fields remain untouched.'+(clearProblems.length?'\nNot cleared:\n'+clearProblems.join('\n'):'')))return;
       if(!await nukeWarning())return;
-      if(location.href!==url||!form.isConnected||!unlocked())throw Error('Chart changed. Clear cancelled.');
+      if(location.href!==url||!form.isConnected||!unlocked()||currentRoot()!==roots[0])throw Error('Chart changed. Clear cancelled.');
       for(const x of snapshot){const current=ko.unwrap(patient[x.key]);if(patient[x.key]!==x.value||current.length!==x.items.length||current.some((v,i)=>v!==x.items[i]))throw Error('Entries changed. Clear cancelled.');}
       for(const x of fields){const now=x.read();if(now.length!==x.before.length||now.some((v,i)=>v!==x.before[i]))throw Error('Fields changed. Clear cancelled.');}
       captureLocal(roots[0],'clear');
       reset();busy=true;
       for(const x of snapshot){x.value.removeAll();if(ko.unwrap(x.value).length)throw Error('Removal not verified for '+x.key+'. Earlier removals may remain.');}
-      for(const x of fields){if(location.href!==url||!unlocked())throw Error('Chart changed during clearing. Earlier removals may remain.');x.vm.applyPresetValue();if(x.read().some(v=>v!=null&&v!==''))throw Error('Clear not verified: '+x.label+'. Earlier removals may remain.');}
+      for(const x of fields){if(location.href!==url||!unlocked())throw Error('Chart changed during clearing. Earlier removals may remain.');x.apply();if(x.read().some(v=>v!=null&&v!==''))throw Error('Clear not verified: '+x.label+'. Earlier removals may remain.');}
       $('#result').textContent='Cleared '+snapshot.map(x=>x.items.length+' '+x.key).join(', ')+' and '+fields.length+' mapped fields. Dispatch/timeline preserved; unmapped fields remain. Native persistence may occur.';
       Object.keys(sessionStorage).filter(k=>k.startsWith('it-a15-create:'+url+':')).forEach(k=>sessionStorage.removeItem(k));if(!clearProblems.length)celebrateClear();else $('#result').textContent+='\nNeeds attention:\n'+clearProblems.join('\n');setTally(!!clearProblems.length);
     }catch(e){$('#result').textContent='Clear stopped: '+e.message;setTally(true);}finally{busy=false;}
@@ -1024,21 +1052,20 @@
   $('#apply').disabled=false;$('#apply').setAttribute('aria-describedby','apply-note');
   const shortcuts=document.createElement('div');shortcuts.className='shortcuts';
   let target=null;
-  document.addEventListener('focusin',e=>{const n=e.target;if(n instanceof HTMLInputElement&&/(Date|Time)$/.test(n.id)&&n.closest('#form-composer,.grid-flyout-active')){target={id:n.id,url:location.href,node:n};status.textContent='Timestamp target: '+(n.closest('.control,.single-row-control,.date-time')?.querySelector('label')?.textContent||n.id);}});
+  document.addEventListener('focusin',e=>{const n=e.target;if(n instanceof HTMLInputElement&&n.closest('#form-composer,.grid-flyout-active')){const pair=timePair(n);if(pair){target={id:n.id,url:location.href,node:n,pair};status.textContent='Timestamp target selected';}}});
   for(const [label,id] of [['At Pt','29336'],['Leaving Scene','29337']]){
     const b=document.createElement('button');b.textContent=label;b.onclick=async()=>{
       if(busy)return;busy=true;const t=target;
       try{
         if(!t||!t.node.isConnected||t.url!==location.href)throw Error('Focus the destination date/time field first.');
         const prefix=t.id.replace(/(Date|Time)$/,''),scope=t.node.closest('.date-time,.control,.single-row-control')||t.node.parentElement;
-        const pair=timePair(t.node),date=pair?.date,time=pair?.time;
+        const pair=t.pair,date=pair?.date,time=pair?.time;
         if(!date||!time||date.disabled||time.disabled||date.readOnly||time.readOnly)throw Error('Writable date/time pair not recognized.');
         const root=currentRoot(),before=[date.value,time.value];await readTimes();
         if(times[id]==null)throw Error('Source timeline time unavailable.');
         if(currentRoot()!==root||location.href!==t.url||!date.isConnected||date.value!==before[0]||time.value!==before[1])throw Error('Target changed; focus it again.');
-        captureLocal(root,'timestamp shortcut');const d=new Date(times[id]),p=n=>String(n).padStart(2,'0'),values=[`${p(d.getMonth()+1)}/${p(d.getDate())}/${d.getFullYear()}`,`${p(d.getHours())}:${p(d.getMinutes())}:${p(d.getSeconds())}`];
-        [date,time].forEach((n,i)=>{Object.getOwnPropertyDescriptor(HTMLInputElement.prototype,'value').set.call(n,values[i]);for(const type of ['input','change','blur'])n.dispatchEvent(new Event(type,{bubbles:true}));});
-        if(date.value!==values[0]||time.value!==values[1])throw Error('Timestamp not confirmed; inspect the field.');
+        captureLocal(root,'timestamp shortcut');
+        await writeTimePair(pair,times[id],id==='29336'?{label:'Patient Arrival'}:null);
         status.textContent=label+' copied to '+(scope.querySelector('label')?.textContent||prefix);
       }catch(e){status.textContent=e.message;}finally{busy=false;}
     };shortcuts.append(b);
@@ -1058,4 +1085,49 @@
   effects.textContent+=' section{display:flex;flex-direction:column;overflow:hidden;max-height:calc(100vh - 130px)}#top-controls{position:static;flex-shrink:0}#tally{min-height:35px;overflow:auto}footer{flex-shrink:0}#profile{margin:4px 0}#profile label{margin:2px 0}#status{margin:6px 0}#issues small{margin:3px 0}section>small{font-size:11px}';
 
   effects.textContent+='#progress-bar{width:100%;height:10px;accent-color:#bb87dc}#progress-label{font-size:12px;margin:5px 0}#run-progress[data-state="error"] progress{accent-color:#ed8989}#run-progress[data-state="done"] progress{accent-color:#73c799}';
+  // Optional UI and diagnostics. No clinical rules or chart writes belong here.
+  const settingsKey='gremlin-ui-v1';
+  let preferences={compact:false,animations:true,observe:false,reverse:false};
+  try{preferences={...preferences,...JSON.parse(localStorage.getItem(settingsKey)||'{}')};}catch(_){}
+  const diagnostics=[],observations=[];
+  const savePreferences=()=>{try{localStorage.setItem(settingsKey,JSON.stringify(preferences));}catch(_){status.textContent='Settings could not be saved.';}};
+  const toolsPanel=document.createElement('div');toolsPanel.id='gremlin-tools';toolsPanel.hidden=true;
+  const tabs=document.createElement('nav');tabs.setAttribute('aria-label','Gremlin views');
+  const workflowTab=document.createElement('button'),toolsTab=document.createElement('button');
+  workflowTab.textContent='Workflow';toolsTab.textContent='Tools / Settings';
+  tabs.append(workflowTab,toolsTab);controls.before(tabs);
+  toolsPanel.append($('#preview'),timelineButton,footer);tally.after(toolsPanel);
+  function selectView(tools){toolsPanel.hidden=!tools;controls.hidden=tools;tally.hidden=tools;workflowTab.setAttribute('aria-pressed',String(!tools));toolsTab.setAttribute('aria-pressed',String(tools));}
+  workflowTab.onclick=()=>selectView(false);toolsTab.onclick=()=>selectView(true);selectView(false);
+  const settings=document.createElement('fieldset');settings.innerHTML='<legend>Settings</legend>';
+  function setting(label,key,apply){const row=document.createElement('label'),input=document.createElement('input');input.type='checkbox';input.checked=preferences[key];row.append(input,document.createTextNode(' '+label));settings.append(row);input.onchange=()=>{preferences[key]=input.checked;savePreferences();apply();};apply();}
+  setting('Compact panel','compact',()=>host.toggleAttribute('data-compact',preferences.compact));
+  setting('Celebration animations','animations',()=>host.toggleAttribute('data-no-animation',!preferences.animations));
+  setting('Swap timestamp button positions','reverse',()=>shortcuts.style.flexDirection=preferences.reverse?'row-reverse':'row');
+  setting('Observe field sequence locally (no values)','observe',()=>{});
+  toolsPanel.prepend(settings);
+  const about=document.createElement('small');about.textContent='Gremlin Logic A15 0.2.4.12 · Updates are managed by Tampermonkey. Observation is limited to field IDs and order in this tab.';settings.append(about);
+  const resetLayout=document.createElement('button');resetLayout.textContent='Reset panel position';resetLayout.onclick=()=>{host.style.left='';host.style.right='24px';host.style.top='90px';};settings.append(resetLayout);
+  const header=$('h3');header.style.cursor='move';
+  header.onpointerdown=e=>{if(e.target.closest('button')||e.button!==0)return;const box=host.getBoundingClientRect(),dx=e.clientX-box.left,dy=e.clientY-box.top;header.setPointerCapture(e.pointerId);const move=p=>{host.style.right='auto';host.style.left=Math.max(0,Math.min(innerWidth-80,p.clientX-dx))+'px';host.style.top=Math.max(0,Math.min(innerHeight-60,p.clientY-dy))+'px';};const end=()=>{header.removeEventListener('pointermove',move);header.removeEventListener('pointerup',end);header.removeEventListener('pointercancel',end);};header.addEventListener('pointermove',move);header.addEventListener('pointerup',end);header.addEventListener('pointercancel',end);};
+  function record(action,outcome){diagnostics.push({sequence:diagnostics.length+1,action,outcome});if(diagnostics.length>200)diagnostics.shift();}
+  for(const [button,action] of [[$('#apply'),'apply'],[clearButton,'clear'],[timelineButton,'timeline'],...Array.from(shortcuts.children,b=>[b,b.textContent==='At Pt'?'patient-time':'departure-time'])]){
+    const run=button.onclick;button.onclick=async e=>{record(action,'started');try{await run(e);record(action,'finished; inspect issues for result');}catch(error){record(action,'failed');throw error;}};
+  }
+  // Never copy free-form error text: it may contain a chart answer or timestamp.
+  async function copyReport(payload){const value=JSON.stringify(payload,null,2);try{await navigator.clipboard.writeText(value);status.textContent='Report copied.';}catch(_){const text=document.createElement('textarea');text.value=value;text.readOnly=true;text.setAttribute('aria-label','Diagnostic report to copy');toolsPanel.append(text);text.select();}}
+  const copyLog=document.createElement('button');copyLog.id='copy-diagnostic-log';copyLog.textContent='Copy diagnostic log';copyLog.onclick=()=>copyReport({version:'0.2.4.12',events:diagnostics,issueCount:$('#issues').children.length});toolsPanel.insertBefore(copyLog,footer);
+  let lastField=null;
+  document.addEventListener('focusin',e=>{
+    if(!preferences.observe||!e.target.closest?.('#form-composer'))return;
+    let node=e.target.closest('[id]'),id=null;
+    while(node&&node.id!=='form-composer'){if(/^[\da-f]{8}-(?:[\da-f]{4}-){3}[\da-f]{12}$/i.test(node.id)){id=node.id;break;}node=node.parentElement;}
+    if(!id||id===lastField)return;lastField=id;observations.push({from:observations.at(-1)?.field||null,field:id});if(observations.length>200)observations.shift();
+  });
+  const copyObservation=document.createElement('button');copyObservation.textContent='Review / copy observed sequence';copyObservation.onclick=()=>copyReport({schema:1,kind:'field-focus-sequence',events:observations});
+  const clearObservation=document.createElement('button');clearObservation.textContent='Clear observed sequence';clearObservation.onclick=()=>{observations.length=0;lastField=null;};settings.append(copyObservation,clearObservation);
+  window.addEventListener('hashchange',()=>{target=null;reviewed=null;times={};learnedDefinitions.clear();observations.length=0;lastField=null;record('context','changed');});
+  ui.querySelectorAll('button').forEach(b=>b.type='button');
+  effects.textContent+='[hidden]{display:none!important}nav{display:flex;gap:8px}#gremlin-tools{overflow:auto;min-height:0}fieldset{border:1px solid #65576f;border-radius:8px}fieldset label{display:block;margin:8px 0}fieldset small{display:block}textarea{width:95%;min-height:180px}:host([data-compact]) section{width:320px}:host([data-no-animation]) .confetti{display:none}';
+
 })();
