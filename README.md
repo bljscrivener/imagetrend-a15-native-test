@@ -1,3 +1,7 @@
+## Gremlin Logic 0.2.4.14
+
+[Install / update](https://raw.githubusercontent.com/bljscrivener/imagetrend-a15-native-test/main/imagetrend-a15-native-test.user.js) · [Release notes](RELEASE-0.2.4.14.md)
+
 # imagetrend-a15-native-test
 Experimental ImageTrend A15 native userscript test distribution
 
