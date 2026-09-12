@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Gremlin Logic A15 AI Bridge
 // @namespace    local.imagetrend.a15native.ai
-// @version      0.1.1
+// @version      0.1.2
 // @description  Guarded bridge to ImageTrend's native AI Capture and AI Generate Values actions for explicit A15 use.
 // @match        https://*.imagetrendelite.com/Elite/*
 // @grant        none
@@ -11,9 +11,8 @@
 
 (() => {
   'use strict';
-
   const MODULE_ID = 'ai-bridge';
-  const VERSION = '0.1.1';
+  const VERSION = '0.1.2';
   const NARRATIVE_ENTRY_ID = '9b465bdd-e13d-511c-8ead-d9743ed82234';
 
   function waitForRuntime(timeoutMs = 12000) {
@@ -29,26 +28,18 @@
   }
 
   const text = el => String(el?.textContent || '').trim().replace(/\s+/g, ' ');
-
   function findButton(exactText) {
     const target = exactText.toLowerCase();
-    return [...document.querySelectorAll('button,[role="button"],.grid-button,.top-pane-button')]
-      .find(el => text(el).toLowerCase() === target) || null;
+    return [...document.querySelectorAll('button,[role="button"],.grid-button,.top-pane-button')].find(el => text(el).toLowerCase() === target) || null;
   }
-
   function narrativeContainer() {
-    return document.getElementById(NARRATIVE_ENTRY_ID)
-      || document.querySelector(`[BindingPathEntryID="${NARRATIVE_ENTRY_ID}"],[bindingpathentryid="${NARRATIVE_ENTRY_ID}"]`)
-      || null;
+    return document.getElementById(NARRATIVE_ENTRY_ID) || document.querySelector(`[BindingPathEntryID="${NARRATIVE_ENTRY_ID}"],[bindingpathentryid="${NARRATIVE_ENTRY_ID}"]`) || null;
   }
-
-  function nativeAiHandler() {
-    return window.imagetrend?.formComposer?.controlHandlers?.autoNarrative || null;
-  }
-
+  function nativeAiHandler() { return window.imagetrend?.formComposer?.controlHandlers?.autoNarrative || null; }
   function safetyGate() {
-    const safety = window.GremlinA15Safety?.canMutate?.();
-    return safety || { ok: true, reason: null };
+    const guard = window.GremlinA15Safety;
+    if (!guard?.canMutate) return { ok: false, reason: 'safety-module-unavailable' };
+    return guard.canMutate();
   }
 
   function capabilities() {
@@ -91,22 +82,18 @@
     const visible = findButton('AI Generate Values');
     if (visible?.disabled) return { ok: false, reason: 'ai-generate-disabled' };
     if (confirm && !window.confirm('Run ImageTrend AI Generate Values for the current narrative context?\n\nReview every generated field before saving. Native save/network side effects still require live validation.')) return { ok: false, reason: 'cancelled' };
-
     runtime?.emit?.('ai-native-action', { action: 'generate-values', phase: 'before' });
-
     if (visible) {
       visible.click();
       runtime?.emit?.('ai-native-action', { action: 'generate-values', phase: 'after', path: 'native-button' });
       return { ok: true, path: 'native-button' };
     }
-
     if (typeof handler?.clickAiGenerateValues !== 'function') return { ok: false, reason: 'native-ai-handler-unavailable' };
     const container = narrativeContainer();
     if (!container) return { ok: false, reason: 'narrative-context-unavailable' };
     let ctx = null;
     try { ctx = window.ko?.contextFor?.(container); } catch {}
     if (!ctx) return { ok: false, reason: 'knockout-context-unavailable' };
-
     try {
       handler.clickAiGenerateValues(ctx);
       runtime?.emit?.('ai-native-action', { action: 'generate-values', phase: 'after', path: 'native-handler' });
@@ -118,33 +105,15 @@
   }
 
   function inspectWithoutInvoking() {
-    const c = capabilities();
     const handler = nativeAiHandler();
-    return {
-      ...c,
-      handlerMethods: handler ? Object.keys(handler).filter(k => typeof handler[k] === 'function').sort() : []
-    };
+    return { ...capabilities(), handlerMethods: handler ? Object.keys(handler).filter(k => typeof handler[k] === 'function').sort() : [] };
   }
 
-  const api = Object.freeze({
-    version: VERSION,
-    capabilities,
-    inspectWithoutInvoking,
-    openCapture,
-    generateValues
-  });
-
+  const api = Object.freeze({ version: VERSION, capabilities, inspectWithoutInvoking, openCapture, generateValues });
   Object.defineProperty(window, 'GremlinA15AI', { value: api, enumerable: false, configurable: false, writable: false });
 
   waitForRuntime().then(runtime => {
-    runtime.registerModule({
-      id: MODULE_ID,
-      version: VERSION,
-      description: 'Explicit bridge to ImageTrend native AI actions. No background AI invocation and no external chart-data export.',
-      defaultEnabled: true,
-      start: async () => runtime.emit('ai-bridge-ready', inspectWithoutInvoking()),
-      stop: async () => {}
-    });
+    runtime.registerModule({ id: MODULE_ID, version: VERSION, description: 'Explicit bridge to ImageTrend native AI actions. No background AI invocation and no external chart-data export.', defaultEnabled: true, start: async () => runtime.emit('ai-bridge-ready', inspectWithoutInvoking()), stop: async () => {} });
     runtime.registerCapability('gremlin.nativeAI', () => ({ available: !!nativeAiHandler(), ...capabilities() }));
     runtime.startModule(MODULE_ID);
   }).catch(() => {});
