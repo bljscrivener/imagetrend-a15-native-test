@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Gremlin Logic A15 Control Center
 // @namespace    local.imagetrend.a15native.control
-// @version      0.2.0
+// @version      0.3.0
 // @description  Headless A15 application/controller bridge. Owns no DOM and exposes a stable UI-facing API over A15 runtime modules.
 // @match        https://*.imagetrendelite.com/Elite/*
 // @grant        none
@@ -13,8 +13,8 @@
   'use strict';
 
   const MODULE_ID = 'control-center';
-  const VERSION = '0.2.0';
-  const BRIDGE_VERSION = '1.0.0';
+  const VERSION = '0.3.0';
+  const BRIDGE_VERSION = '1.1.0';
   const EVENT = 'gremlin:a15:bridge-state';
   let runtime = null;
   let unsubscribe = [];
@@ -54,6 +54,15 @@
     catch { return null; }
   }
 
+  function execution() {
+    try {
+      const x = window.GremlinA15LegacyExecution?.state?.();
+      return x || { available: false, running: false, applyReady: false, resultText: '', legacyChromeHidden: false };
+    } catch {
+      return { available: false, running: false, applyReady: false, resultText: '', legacyChromeHidden: false };
+    }
+  }
+
   function profileState() {
     const active = runtime?.getProfile?.() || null;
     const profiles = runtime?.listProfiles?.() || [];
@@ -67,6 +76,7 @@
     const c = compatibility();
     const s = safety();
     const p = profileState();
+    const x = execution();
     return clone({
       bridgeVersion: BRIDGE_VERSION,
       runtimeVersion: runtime?.version || null,
@@ -76,6 +86,13 @@
       profiles: p.profiles,
       settings: runtime?.settings?.all?.() || {},
       findings: findings(),
+      execution: {
+        available: !!x.available,
+        running: !!x.running,
+        applyReady: !!x.applyReady,
+        resultText: String(x.resultText || ''),
+        legacyChromeHidden: !!x.legacyChromeHidden
+      },
       compatibility: {
         state: c?.lastCheck?.state || c?.state || 'DISCOVERED',
         fingerprint: c?.lastCheck?.fingerprint || c?.trusted?.fingerprint || null
@@ -107,6 +124,7 @@
       reconstruction: window.GremlinA15Reconstruction?.scan?.('diagnostics') || null,
       compatibility: compatibility(),
       safety: safety(),
+      execution: execution(),
       nativeActions: window.GremlinA15NativeActions?.capabilityMap?.() || null,
       ai: window.GremlinA15AI?.inspectWithoutInvoking?.() || null,
       protectedFields: window.GremlinA15ProtectedFields?.list?.() || [],
@@ -121,6 +139,31 @@
   }
 
   const actions = Object.freeze({
+    async goBabyGo() {
+      if (!window.GremlinA15LegacyExecution?.goBabyGo) return { ok: false, reason: 'execution engine unavailable' };
+      notify('execution-requested');
+      try {
+        const result = await window.GremlinA15LegacyExecution.goBabyGo();
+        notify('execution-complete');
+        return { ok: true, state: result };
+      } catch (error) {
+        notify('execution-error');
+        return { ok: false, reason: String(error?.message || error), state: execution() };
+      }
+    },
+
+    async reviewExecution() {
+      if (!window.GremlinA15LegacyExecution?.review) return { ok: false, reason: 'execution engine unavailable' };
+      try {
+        const result = await window.GremlinA15LegacyExecution.review();
+        notify('execution-reviewed');
+        return { ok: true, state: result };
+      } catch (error) {
+        notify('execution-review-error');
+        return { ok: false, reason: String(error?.message || error), state: execution() };
+      }
+    },
+
     async evaluate() {
       const result = await window.GremlinA15Findings?.evaluate?.({ source: 'control-center' });
       notify('findings-evaluated');
@@ -245,7 +288,8 @@
       'gremlin:a15:safety-failure',
       'gremlin:a15:safety-reset',
       'gremlin:a15:module-started',
-      'gremlin:a15:module-stopped'
+      'gremlin:a15:module-stopped',
+      'gremlin:a15:legacy-execution-state'
     ].forEach(name => on(name, relay));
 
     notify('bridge-ready');
