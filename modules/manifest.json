@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "runtime": {
+    "id": "a15-runtime-core",
+    "version": "0.1.0",
+    "path": "modules/a15-runtime-core.user.js",
+    "required": true
+  },
+  "modules": [],
+  "rollout": {
+    "strategy": "sequential-batches",
+    "notes": [
+      "Keep the production A15 userscript stable while add-on modules are developed and tested independently.",
+      "Each module must fail closed: a module error must not disable the A15 core.",
+      "Persistent user profiles live under the runtime storage schema and must survive module updates.",
+      "Reconstruction is metadata-only by default and must not become a keystroke or patient-text logger."
+    ]
+  }
+}
