@@ -36,6 +36,13 @@
       "dependsOn": ["a15-runtime-core", "compatibility-guard"]
     },
     {
+      "id": "protected-fields",
+      "version": "0.1.0",
+      "path": "modules/a15-protected-fields.user.js",
+      "defaultEnabled": true,
+      "dependsOn": ["a15-runtime-core"]
+    },
+    {
       "id": "model-bridge",
       "version": "0.1.1",
       "path": "modules/a15-model-bridge.user.js",
@@ -58,10 +65,10 @@
     },
     {
       "id": "protocol-assist",
-      "version": "0.1.0",
+      "version": "0.1.1",
       "path": "modules/a15-protocol-assist.user.js",
       "defaultEnabled": true,
-      "dependsOn": ["a15-runtime-core", "model-bridge"]
+      "dependsOn": ["a15-runtime-core", "model-bridge", "protected-fields"]
     },
     {
       "id": "control-center",
@@ -77,6 +84,7 @@
     "reconstruction-mapper",
     "compatibility-guard",
     "safety-guard",
+    "protected-fields",
     "model-bridge",
     "clinical-logic",
     "ai-bridge",
