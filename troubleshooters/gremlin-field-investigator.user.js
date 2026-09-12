@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Gremlin Field Investigator
 // @namespace    local.imagetrend.gremlin.investigator
-// @version      0.2.1
+// @version      0.2.2
 // @description  Read-only ImageTrend field/binding/resource investigator for mapping native controls and option vocabularies.
 // @match        https://*.imagetrendelite.com/Elite/*
 // @updateURL    https://raw.githubusercontent.com/bljscrivener/imagetrend-a15-native-test/main/troubleshooters/gremlin-field-investigator.user.js
@@ -251,7 +251,7 @@
     const koInfo=koSnapshot(node);
     const optionSources=traceOptionSources(node);
     return {
-      investigatorVersion:'0.2.1',
+      investigatorVersion:'0.2.2',
       mappingVersion:'3-investigator',
       capturedAt:new Date().toISOString(),
       route:location.pathname,
@@ -283,14 +283,14 @@
         out.push({field:meta,options,optionSources:traceOptionSources(node),ko:koInfo,resourceMatches:resourceMatches(meta,koInfo,options)});
       }
     }
-    return {investigatorVersion:'0.2.1',mappingVersion:'3-investigator',capturedAt:new Date().toISOString(),route:location.pathname,fields:out};
+    return {investigatorVersion:'0.2.2',mappingVersion:'3-investigator',capturedAt:new Date().toISOString(),route:location.pathname,fields:out};
   }
 
   const host=document.createElement('div');
   host.id=HOST_ID;
   host.style.cssText='position:fixed;right:18px;bottom:18px;z-index:2147483647';
   const shadow=host.attachShadow({mode:'open'});
-  shadow.innerHTML=`<style>:host{font:13px system-ui;color:#182230}button{font:inherit;cursor:pointer}.launch{border:0;border-radius:999px;padding:9px 12px;box-shadow:0 4px 16px #0004}.panel{width:460px;max-width:90vw;max-height:74vh;overflow:auto;background:#fff;border:2px solid #5b4b8a;border-radius:12px;padding:12px;box-shadow:0 10px 30px #0005}.row{display:flex;gap:6px;flex-wrap:wrap;margin:7px 0}.row button{padding:7px 9px}.status{font-size:12px;margin:6px 0}pre{white-space:pre-wrap;word-break:break-word;background:#f4f4f7;padding:8px;border-radius:6px;max-height:44vh;overflow:auto}small{display:block;line-height:1.35}.hide{float:right}</style><button class="launch">Field Investigator</button><div class="panel" hidden><button class="hide">×</button><strong>Gremlin Field Investigator 0.2.1</strong><small>Read-only. Tap/focus a field, or open its flyout/dropdown first. v0.2 traces Knockout option sources and survives Safari interceptor overlays.</small><div class="row"><button id="inspect">Inspect focused field</button><button id="scan">Scan visible tree</button><button id="pick">Pick next field</button></div><div class="row"><button id="copy">Copy JSON</button><button id="clear">Clear</button></div><div class="status">Idle.</div><pre>{}</pre></div>`;
+  shadow.innerHTML=`<style>:host{font:13px system-ui;color:#e6edf3}button{font:inherit;cursor:pointer;color:#e6edf3;background:#17212b;border:1px solid #2dd4bf;border-radius:8px}.launch{border:1px solid #2dd4bf;border-radius:999px;padding:9px 12px;background:#111827;color:#d1fae5;box-shadow:0 4px 16px #0007}.panel{width:460px;max-width:90vw;max-height:74vh;overflow:auto;background:#0f1720;border:2px solid #2dd4bf;border-radius:12px;padding:12px;box-shadow:0 10px 30px #0008}.row{display:flex;gap:6px;flex-wrap:wrap;margin:7px 0}.row button{padding:7px 9px}.row button:hover{background:#1f2937}.status{font-size:12px;margin:6px 0;color:#99f6e4}pre{white-space:pre-wrap;word-break:break-word;background:#09111a;color:#cbd5e1;border:1px solid #334155;padding:8px;border-radius:6px;max-height:44vh;overflow:auto}small{display:block;line-height:1.35;color:#94a3b8}.hide{float:right}</style><button class="launch">Field Investigator</button><div class="panel" hidden><button class="hide">×</button><strong>Gremlin Field Investigator 0.2.2</strong><small>Read-only. Tap/focus a field, or open its flyout/dropdown first. v0.2 traces Knockout option sources and survives Safari interceptor overlays.</small><div class="row"><button id="inspect">Inspect focused field</button><button id="scan">Scan visible tree</button><button id="pick">Pick next field</button></div><div class="row"><button id="copy">Copy JSON</button><button id="clear">Clear</button></div><div class="status">Idle.</div><pre>{}</pre></div>`;
   document.body.append(host);
 
   const $=s=>shadow.querySelector(s); let result={},lastTarget=null,picking=false;
