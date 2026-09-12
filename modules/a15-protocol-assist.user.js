@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Gremlin Logic A15 Protocol Assist
 // @namespace    local.imagetrend.a15native.protocols
-// @version      0.1.0
+// @version      0.1.1
 // @description  Persistent protocol rule-pack framework for explicit, reviewable ImageTrend field suggestions and autofill.
 // @match        https://*.imagetrendelite.com/Elite/*
 // @grant        none
@@ -13,7 +13,7 @@
   'use strict';
 
   const MODULE_ID = 'protocol-assist';
-  const VERSION = '0.1.0';
+  const VERSION = '0.1.1';
   const STORAGE_KEY = 'gremlin.a15.protocol-packs.v1';
   const protocols = new Map();
   const safeParse = (s, f) => { try { return JSON.parse(s); } catch { return f; } };
@@ -127,10 +127,25 @@
 
   function exportPacks() { return clone(loadStore()); }
 
+  function protectedCheck(action) {
+    const policy = window.GremlinA15ProtectedFields;
+    if (!policy?.check) return { allowed: true, policyUnavailable: true };
+    const proposed = action.type === 'value' ? action.value : (action.optionLabels || [])[0];
+    return policy.check(action.target, proposed);
+  }
+
   function suggestions(protocolId, facts = {}) {
     const p = protocols.get(String(protocolId));
     if (!p) return [];
-    return p.actions.filter(a => factMatches(a.when, facts)).map(a => ({ ...clone(a), resolvable: !!window.GremlinA15Bridge?.resolve?.(a.target) }));
+    return p.actions.filter(a => factMatches(a.when, facts)).map(a => {
+      const protection = protectedCheck(a);
+      return {
+        ...clone(a),
+        resolvable: !!window.GremlinA15Bridge?.resolve?.(a.target),
+        blocked: protection.allowed === false,
+        blockedReason: protection.allowed === false ? protection.reason : null
+      };
+    });
   }
 
   async function apply(protocolId, facts = {}, { confirm = true } = {}) {
@@ -141,12 +156,17 @@
     const actions = p.actions.filter(a => factMatches(a.when, facts));
     if (!actions.length) return { ok: true, applied: [], skipped: [], note: 'No matching actions.' };
 
-    if (confirm && !window.confirm(`Apply ${actions.length} suggested field change(s) from “${p.name}”?\n\nA15 will change only fields it can resolve and verify. Review the chart before saving.`)) {
+    if (confirm && !window.confirm(`Apply ${actions.length} suggested field change(s) from “${p.name}”?\n\nA15 will change only fields it can resolve, is permitted to automate, and can verify. Review the chart before saving.`)) {
       return { ok: false, reason: 'cancelled' };
     }
 
     const applied = [], skipped = [];
     for (const action of actions) {
+      const protection = protectedCheck(action);
+      if (protection.allowed === false) {
+        skipped.push({ actionId: action.id, result: { ok: false, reason: 'protected-field-quarantine', detail: protection.reason } });
+        continue;
+      }
       let result;
       if (action.type === 'select') result = await bridge.selectByLabel(action.target, action.optionLabels, { fuzzy: false });
       else result = await bridge.setValue(action.target, action.value);
@@ -182,7 +202,7 @@
       start: async () => runtime.emit('protocol-assist-ready', { protocols: protocols.size }),
       stop: async () => {}
     });
-    runtime.registerCapability('gremlin.protocolAssist', () => ({ available: true, protocols: protocols.size, importedPacks: Object.keys(loadStore().packs || {}).length }));
+    runtime.registerCapability('gremlin.protocolAssist', () => ({ available: true, protocols: protocols.size, importedPacks: Object.keys(loadStore().packs || {}).length, protectedFieldPolicy: !!window.GremlinA15ProtectedFields }));
     runtime.startModule(MODULE_ID);
   }).catch(() => {});
 })();
