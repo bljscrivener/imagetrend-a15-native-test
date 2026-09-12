@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Gremlin Field Investigator
 // @namespace    local.imagetrend.gremlin.investigator
-// @version      0.3.0
+// @version      0.3.1
 // @description  Compatibility entrypoint for the Safari-safe Gremlin Universal Investigator.
 // @match        http://*/*
 // @match        https://*/*
