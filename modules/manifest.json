@@ -6,7 +6,15 @@
     "path": "modules/a15-runtime-core.user.js",
     "required": true
   },
-  "modules": [],
+  "modules": [
+    {
+      "id": "findings-engine",
+      "version": "0.1.0",
+      "path": "modules/a15-findings-engine.user.js",
+      "defaultEnabled": true,
+      "dependsOn": ["a15-runtime-core"]
+    }
+  ],
   "rollout": {
     "strategy": "sequential-batches",
     "notes": [
