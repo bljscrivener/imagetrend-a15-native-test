@@ -1,7 +1,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '0.4.0-dev.1';
+  const VERSION = '0.4.0-dev.2';
   if (window.GremlinA15Core04?.version) return;
 
   const now = () => new Date().toISOString();
@@ -35,18 +35,32 @@
     return () => listeners.get(type)?.delete(fn);
   }
 
-  function registerService(id, service, meta = {}) {
-    if (!id || !service) throw new Error('service id and implementation required');
-    if (services.has(id)) throw new Error(`service already registered: ${id}`);
-    services.set(id, { service, meta: clone(meta) });
-    emit('service-registered', { serviceId: id, version: meta.version || null });
-    return service;
+  function installService(id, implementation, meta = {}, replace = false) {
+    if (!id || !implementation) throw new Error('service id and implementation required');
+    if (services.has(id) && !replace) throw new Error(`service already registered: ${id}`);
+    const previous = services.get(id) || null;
+    services.set(id, { service: implementation, meta: clone(meta) });
+    emit(previous ? 'service-replaced' : 'service-registered', {
+      serviceId: id,
+      version: meta.version || implementation.version || null,
+      previousVersion: previous?.meta?.version || previous?.service?.version || null
+    });
+    return implementation;
   }
+
+  function registerService(id, implementation, meta = {}) { return installService(id, implementation, meta, false); }
+  function replaceService(id, implementation, meta = {}) { return installService(id, implementation, meta, true); }
 
   function service(id, required = true) {
     const found = services.get(id)?.service;
     if (!found && required) throw new Error(`required service unavailable: ${id}`);
     return found || null;
+  }
+
+  function serviceInfo(id = null) {
+    const one = ([name,record]) => ({ id:name, version:record.meta?.version || record.service?.version || null, meta:clone(record.meta || {}) });
+    if (id) return services.has(id) ? one([id,services.get(id)]) : null;
+    return [...services.entries()].map(one);
   }
 
   function registerWorker(def) {
@@ -163,14 +177,23 @@
 
   function aggregate(pipelineId = null) {
     const set=[...jobs.values()].filter(j => !pipelineId || j.pipelineId===pipelineId);
-    if (!set.length) return { progress:0, total:0, complete:0, running:0, blocked:0, error:0 };
+    if (!set.length) return { progress:0, total:0, complete:0, running:0, queued:0, blocked:0, error:0, canceled:0 };
     const progress=set.reduce((n,j)=>n+(j.progress||0),0)/set.length;
-    return { progress, total:set.length, complete:set.filter(j=>j.state==='complete').length, running:set.filter(j=>j.state==='running').length, blocked:set.filter(j=>j.state==='blocked').length, error:set.filter(j=>j.state==='error').length };
+    return {
+      progress,
+      total:set.length,
+      complete:set.filter(j=>j.state==='complete').length,
+      running:set.filter(j=>j.state==='running').length,
+      queued:set.filter(j=>j.state==='queued').length,
+      blocked:set.filter(j=>j.state==='blocked').length,
+      error:set.filter(j=>j.state==='error').length,
+      canceled:set.filter(j=>j.state==='canceled').length
+    };
   }
 
   const api = Object.freeze({
     version: VERSION,
-    registerService, service,
+    registerService, replaceService, service, serviceInfo,
     registerWorker,
     submit: makeJob,
     cancelJob,
