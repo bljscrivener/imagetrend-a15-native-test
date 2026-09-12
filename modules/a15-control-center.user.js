@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Gremlin Logic A15 Control Center
 // @namespace    local.imagetrend.a15native.ui
-// @version      0.1.0
+// @version      0.1.1
 // @description  Compact A15 module UI for findings, profiles, reconstruction controls, native AI, saline flush, diagnostics, and help.
 // @match        https://*.imagetrendelite.com/Elite/*
 // @grant        none
@@ -13,7 +13,7 @@
   'use strict';
 
   const MODULE_ID = 'control-center';
-  const VERSION = '0.1.0';
+  const VERSION = '0.1.1';
   const HOST_ID = 'gremlin-a15-control-center';
   let shadow = null;
   let runtime = null;
@@ -177,6 +177,10 @@
 
     $('#reconstruction').onchange = e => {
       const enabled = !!e.target.checked;
+      if (!enabled) {
+        const proceed = window.confirm('Disable adaptive reconstruction?\n\nThis is a core resilience feature. Turning it off stops automatic metadata remapping and makes A15 more likely to break when ImageTrend changes its forms or controls. No keystrokes or patient-entered scalar values are recorded by the mapper.');
+        if (!proceed) { e.target.checked = true; return status('Adaptive reconstruction remains enabled.'); }
+      }
       runtime.settings.set('reconstructionEnabled', enabled);
       window.GremlinA15Reconstruction?.setEnabled?.(enabled);
       status(enabled ? 'Adaptive reconstruction enabled.' : 'Reconstruction disabled. Update resilience is reduced.');
