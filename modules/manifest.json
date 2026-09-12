@@ -13,9 +13,9 @@
     {"id":"safety-guard","version":"0.1.0","path":"modules/a15-safety-guard.user.js","defaultEnabled":true,"dependsOn":["a15-runtime-core","compatibility-guard"]},
     {"id":"protected-fields","version":"0.1.0","path":"modules/a15-protected-fields.user.js","defaultEnabled":true,"dependsOn":["a15-runtime-core"]},
     {"id":"native-actions","version":"0.1.0","path":"modules/a15-native-actions.user.js","defaultEnabled":true,"dependsOn":["a15-runtime-core","safety-guard"]},
-    {"id":"model-bridge","version":"0.1.1","path":"modules/a15-model-bridge.user.js","defaultEnabled":true,"dependsOn":["a15-runtime-core","safety-guard"]},
+    {"id":"model-bridge","version":"0.1.2","path":"modules/a15-model-bridge.user.js","defaultEnabled":true,"dependsOn":["a15-runtime-core","safety-guard","protected-fields"]},
     {"id":"clinical-logic","version":"0.1.0","path":"modules/a15-clinical-logic.user.js","defaultEnabled":true,"dependsOn":["a15-runtime-core","findings-engine","model-bridge"]},
-    {"id":"ai-bridge","version":"0.1.1","path":"modules/a15-ai-bridge.user.js","defaultEnabled":true,"dependsOn":["a15-runtime-core","safety-guard"]},
+    {"id":"ai-bridge","version":"0.1.2","path":"modules/a15-ai-bridge.user.js","defaultEnabled":true,"dependsOn":["a15-runtime-core","safety-guard"]},
     {"id":"protocol-assist","version":"0.1.1","path":"modules/a15-protocol-assist.user.js","defaultEnabled":true,"dependsOn":["a15-runtime-core","model-bridge","protected-fields"]},
     {"id":"control-center","version":"0.1.2","path":"modules/a15-control-center.user.js","defaultEnabled":true,"dependsOn":["a15-runtime-core","findings-engine","compatibility-guard","safety-guard"]}
   ],
