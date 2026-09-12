@@ -1,14 +1,14 @@
 // ==UserScript==
 // @name         Gremlin Logic A15 0.4 Dev Runtime
 // @namespace    local.imagetrend.a15native.v04
-// @version      0.4.0-dev.1
+// @version      0.4.0-dev.2
 // @description  A15 0.4 asynchronous scheduler/runtime layered over the known-good 0.3 mechanism.
 // @match        https://*.imagetrendelite.com/Elite/*
 // @grant        none
 // @run-at       document-idle
 // @noframes
 // @sandbox      raw
-// @require      https://raw.githubusercontent.com/bljscrivener/imagetrend-a15-native-test/a15-0.4-async-runtime/v0.4/core/a15-core-0.4.js?v=1
+// @require      https://raw.githubusercontent.com/bljscrivener/imagetrend-a15-native-test/a15-0.4-async-runtime/v0.4/core/a15-core-0.4.js?v=2
 // @require      https://raw.githubusercontent.com/bljscrivener/imagetrend-a15-native-test/a15-0.4-async-runtime/v0.4/services/service-contracts.js?v=2
 // @require      https://raw.githubusercontent.com/bljscrivener/imagetrend-a15-native-test/a15-0.4-async-runtime/v0.4/services/pdf-integrator.js?v=1
 // @require      https://raw.githubusercontent.com/bljscrivener/imagetrend-a15-native-test/a15-0.4-async-runtime/v0.4/services/legacy-compat.js?v=1
@@ -21,7 +21,7 @@
 
 (() => {
   'use strict';
-  const version='0.4.0-dev.1';
+  const version='0.4.0-dev.2';
   const state={
     version,
     loadedAt:new Date().toISOString(),
