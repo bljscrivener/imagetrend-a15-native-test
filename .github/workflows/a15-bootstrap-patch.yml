@@ -1,0 +1,80 @@
+name: A15 Safari bootstrap patch
+
+on:
+  push:
+    paths:
+      - '.github/workflows/a15-bootstrap-patch.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Move A15 self-heal ahead of route-specific runtime
+        shell: python
+        run: |
+          from pathlib import Path
+
+          script = Path('imagetrend-a15-native-test.user.js')
+          text = script.read_text()
+          old_version = '0.2.4.15'
+          new_version = '0.2.4.16'
+          if old_version not in text and new_version not in text:
+              raise SystemExit('Expected A15 version marker not found')
+          text = text.replace(old_version, new_version)
+
+          old_match = '// @match        https://*.imagetrendelite.com/Elite/*/EmsRunForm*'
+          new_match = '// @match        https://*.imagetrendelite.com/Elite/*'
+          if old_match in text:
+              text = text.replace(old_match, new_match, 1)
+          elif new_match not in text:
+              raise SystemExit('Expected userscript @match line not found')
+
+          marker = "  'use strict';\n"
+          bootstrap = """  'use strict';
+  // Bootstrap-level route healing: load on Elite first, then decide whether A15 should mount.
+  // This keeps route changes (including iPad OfflineEmsRunForm) from failing before A15 can recover.
+  const a15SupportedRoute=()=>/^\\/Elite\\/.+\\/(?:Offline)?EmsRunForm(?:\\/|$)/i.test(location.pathname);
+  if(!a15SupportedRoute()){
+    let lastHref=location.href;
+    const healRoute=()=>{
+      if(location.href===lastHref)return;
+      lastHref=location.href;
+      if(a15SupportedRoute())location.reload();
+    };
+    addEventListener('hashchange',healRoute);
+    addEventListener('popstate',healRoute);
+    // ImageTrend can change routes through history APIs without emitting hashchange/popstate.
+    setInterval(healRoute,1200);
+    return;
+  }
+"""
+          if 'const a15SupportedRoute=' not in text:
+              if marker not in text:
+                  raise SystemExit('A15 bootstrap insertion point not found')
+              text = text.replace(marker, bootstrap, 1)
+
+          script.write_text(text)
+
+          readme = Path('README.md')
+          r = readme.read_text()
+          r = r.replace('## Gremlin Logic 0.2.4.14', '## Gremlin Logic 0.2.4.16')
+          r = r.replace('RELEASE-0.2.4.14.md', 'RELEASE-0.2.4.16.md')
+          readme.write_text(r)
+
+          release = Path('RELEASE-0.2.4.16.md')
+          release.write_text('''# Gremlin Logic A15 0.2.4.16\n\n## Safari / iPad bootstrap repair\n\n- Broadened the userscript bootstrap scope to the ImageTrend Elite application so route matching cannot prevent A15 from starting its own recovery layer.\n- Added an internal conservative route gate for `EmsRunForm` and `OfflineEmsRunForm`.\n- Added bootstrap route healing for hash, history, and SPA route changes; when an unsupported Elite page transitions into a supported run form, A15 reloads once into the chart context.\n- Specifically supports the iPad/Safari route shape `/Elite/<org>/RunForm/<agency>/OfflineEmsRunForm#/Incident...`.\n- Clinical write behavior is unchanged; this patch only changes bootstrap/routing behavior.\n''')
+      - name: Commit patch
+        run: |
+          git config user.name "gremlinlogic-bot"
+          git config user.email "gremlinlogic.dev@users.noreply.github.com"
+          git add imagetrend-a15-native-test.user.js README.md RELEASE-0.2.4.16.md
+          if git diff --cached --quiet; then
+            echo "Patch already applied"
+            exit 0
+          fi
+          git commit -m "Fix A15 Safari iPad bootstrap and route self-heal"
+          git push
