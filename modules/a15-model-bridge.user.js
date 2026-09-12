@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Gremlin Logic A15 Model Bridge
 // @namespace    local.imagetrend.a15native.bridge
-// @version      0.1.0
+// @version      0.1.1
 // @description  Fail-closed live ImageTrend field resolver and explicit write bridge for A15 modules.
 // @match        https://*.imagetrendelite.com/Elite/*
 // @grant        none
@@ -13,7 +13,7 @@
   'use strict';
 
   const MODULE_ID = 'model-bridge';
-  const VERSION = '0.1.0';
+  const VERSION = '0.1.1';
   const knownFields = new Map();
   const norm = v => (v == null ? '' : String(v)).trim();
   const unwrap = v => { try { return window.ko?.unwrap ? window.ko.unwrap(v) : (typeof v === 'function' ? v() : v); } catch { return undefined; } };
@@ -163,7 +163,6 @@
         if (match) return { item: match, owner: source.data, source: source.key };
       }
     }
-    // Some controls expose the selection functions one context above the resource array.
     for (const d of contexts) {
       const list = unwrap(d?.allResources);
       if (!Array.isArray(list)) continue;
@@ -173,11 +172,37 @@
     return null;
   }
 
+  function safetyCheck(scope) {
+    const safety = window.GremlinA15Safety;
+    if (!safety?.canMutate) return { ok: true, reason: 'safety-module-not-loaded' };
+    const gate = safety.canMutate();
+    if (!gate.ok) window.GremlinA15Runtime?.emit?.('write-blocked', { scope, reason: gate.reason });
+    return gate;
+  }
+
+  function recordOutcome(scope, result) {
+    const safety = window.GremlinA15Safety;
+    if (!safety) return;
+    if (result?.ok) safety.recordSuccess?.(scope);
+    else safety.recordFailure?.(scope, { reason: result?.reason || 'unknown' });
+  }
+
   async function selectByLabel(target, labels, options = {}) {
+    const gate = safetyCheck('selectByLabel');
+    if (!gate.ok) return { ok: false, reason: gate.reason, blockedBySafety: true };
+
     const meta = resolve(target);
-    if (!meta) return { ok: false, reason: 'field-not-resolved' };
+    if (!meta) {
+      const out = { ok: false, reason: 'field-not-resolved' };
+      recordOutcome('selectByLabel', out);
+      return out;
+    }
     const found = findOption(meta, labels, options);
-    if (!found) return { ok: false, reason: 'option-not-found', field: brief(meta) };
+    if (!found) {
+      const out = { ok: false, reason: 'option-not-found', field: brief(meta) };
+      recordOutcome('selectByLabel', out);
+      return out;
+    }
 
     const contexts = resourcesFromContext(meta).contexts;
     let invoked = false;
@@ -197,20 +222,42 @@
         if (opt) { nativeSet(host, opt.value); invoked = true; }
       }
     }
-    if (!invoked) return { ok: false, reason: 'selection-function-unavailable', field: brief(meta) };
+    if (!invoked) {
+      const out = { ok: false, reason: 'selection-function-unavailable', field: brief(meta) };
+      recordOutcome('selectByLabel', out);
+      return out;
+    }
     await new Promise(r => setTimeout(r, 80));
-    return { ok: true, field: brief(meta), selectedLabel: optionLabel(found.item), displayed: readDisplay(meta) };
+    const selectedLabel = optionLabel(found.item);
+    const displayed = readDisplay(meta);
+    const ok = !displayed || displayed.toLowerCase().includes(selectedLabel.toLowerCase()) || selectedLabel.toLowerCase().includes(displayed.toLowerCase());
+    const out = { ok, reason: ok ? null : 'verification-failed', field: brief(meta), selectedLabel, displayed };
+    recordOutcome('selectByLabel', out);
+    return out;
   }
 
   async function setValue(target, value, { verify = true } = {}) {
+    const gate = safetyCheck('setValue');
+    if (!gate.ok) return { ok: false, reason: gate.reason, blockedBySafety: true };
+
     const meta = resolve(target);
-    if (!meta) return { ok: false, reason: 'field-not-resolved' };
+    if (!meta) {
+      const out = { ok: false, reason: 'field-not-resolved' };
+      recordOutcome('setValue', out);
+      return out;
+    }
     const el = inputOf(meta);
-    if (!nativeSet(el, value)) return { ok: false, reason: 'unsupported-control', field: brief(meta) };
+    if (!nativeSet(el, value)) {
+      const out = { ok: false, reason: 'unsupported-control', field: brief(meta) };
+      recordOutcome('setValue', out);
+      return out;
+    }
     await new Promise(r => setTimeout(r, 60));
     const displayed = readDisplay(meta);
     const ok = !verify || norm(displayed) === norm(value);
-    return { ok, reason: ok ? null : 'verification-failed', field: brief(meta), displayed };
+    const out = { ok, reason: ok ? null : 'verification-failed', field: brief(meta), displayed };
+    recordOutcome('setValue', out);
+    return out;
   }
 
   function brief(meta) {
@@ -254,7 +301,7 @@
       start: async () => runtime.emit('model-bridge-ready', {}),
       stop: async () => {}
     });
-    runtime.registerCapability('gremlin.modelBridge', () => ({ available: true, visibleFields: allFieldMetas().length }));
+    runtime.registerCapability('gremlin.modelBridge', () => ({ available: true, visibleFields: allFieldMetas().length, safetyGuard: !!window.GremlinA15Safety }));
     runtime.startModule(MODULE_ID);
   }).catch(() => {});
 })();
