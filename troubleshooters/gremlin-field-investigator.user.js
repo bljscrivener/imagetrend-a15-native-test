@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         Gremlin Field Investigator
 // @namespace    local.imagetrend.gremlin.investigator
-// @version      0.2.2
-// @description  Read-only ImageTrend field/binding/resource investigator for mapping native controls and option vocabularies.
+// @version      0.2.4
+// @description  Read-only ImageTrend field, binding, resource, and action investigator with compact iPad UI.
 // @match        https://*.imagetrendelite.com/Elite/*
 // @updateURL    https://raw.githubusercontent.com/bljscrivener/imagetrend-a15-native-test/main/troubleshooters/gremlin-field-investigator.user.js
 // @downloadURL  https://raw.githubusercontent.com/bljscrivener/imagetrend-a15-native-test/main/troubleshooters/gremlin-field-investigator.user.js
@@ -16,6 +16,9 @@
   if (document.getElementById('gremlin-field-investigator')) return;
 
   const HOST_ID = 'gremlin-field-investigator';
+  const VERSION = '0.2.4';
+  const FIELD_MAPPING_VERSION = '3-investigator';
+  const ACTION_MAPPING_VERSION = '4-action-investigator';
   const FIELD_ATTRS = [
     'bindingpathentryid','binding-path-entry-id','data-bindingpathentryid','data-binding-path-entry-id',
     'bindingpath','binding-path','data-bindingpath','data-binding-path',
@@ -64,10 +67,7 @@
 
   function nearestFieldNode(start) {
     const chain = contextChain(start);
-    const withMeta = chain.find(x => {
-      const d = x.data;
-      return META_KEYS.some(k => unwrap(d?.[k]) != null && unwrap(d?.[k]) !== '');
-    });
+    const withMeta = chain.find(x => META_KEYS.some(k => unwrap(x.data?.[k]) != null && unwrap(x.data?.[k]) !== ''));
     if (withMeta) return withMeta.el;
     let el = start instanceof Element ? start : null;
     for (let i = 0; el && i < 12; i++, el = el.parentElement) {
@@ -75,6 +75,15 @@
       if (Object.keys(a).length || el.matches?.('select,input,textarea,[data-bind],[data-control-id],[data-controlid]')) return el;
     }
     return start instanceof Element ? start : document.activeElement;
+  }
+
+  function dedupeOptions(items) {
+    const seen = new Set();
+    return items.filter(x => {
+      const key = `${x.label||''}\u0000${x.value||''}\u0000${x.id||''}`;
+      if (seen.has(key)) return false;
+      seen.add(key); return true;
+    });
   }
 
   function visibleOptionText(el) {
@@ -91,21 +100,11 @@
     return dedupeOptions(items).slice(0, 500);
   }
 
-  function dedupeOptions(items) {
-    const seen = new Set();
-    return items.filter(x => {
-      const key = `${x.label||''}\u0000${x.value||''}\u0000${x.id||''}`;
-      if (seen.has(key)) return false;
-      seen.add(key); return true;
-    });
-  }
-
   function optionFromObject(o, source) {
     if (!o || typeof o !== 'object') return null;
     const labelKeys = ['Value','Label','Text','Name','DisplayName','Description','Title'];
     const valueKeys = ['Id','ID','ValueID','Code','Key','Value','NemsisCode'];
-    let label = '';
-    let value = '';
+    let label = '', value = '';
     for (const k of labelKeys) {
       const v = unwrap(o[k]);
       if (primitive(v) && norm(v)) { label = norm(v); break; }
@@ -128,8 +127,7 @@
     };
     const walk = (obj,path,depth) => {
       obj = unwrap(obj);
-      if (!obj || typeof obj !== 'object' || depth > 4) return;
-      if (visited.has(obj)) return;
+      if (!obj || typeof obj !== 'object' || depth > 4 || visited.has(obj)) return;
       visited.add(obj);
       if (Array.isArray(obj)) { addArray(obj,path,depth); return; }
       for (const k of Object.keys(obj).slice(0,180)) {
@@ -169,7 +167,7 @@
       const v = unwrap(data[k]);
       if (primitive(v)) likely[k] = v;
       else if (Array.isArray(v)) likely[k] = { type:'array', length:v.length };
-      else if (typeof v === 'object') likely[k] = { type:'object', keys:Object.keys(v).slice(0,40) };
+      else if (typeof v === 'object' && v) likely[k] = { type:'object', keys:Object.keys(v).slice(0,40) };
     }
     return {keys,likely,contextDepth:chain.length};
   }
@@ -249,15 +247,15 @@
     const meta=fieldMeta(node);
     const options=visibleOptionText(node);
     const koInfo=koSnapshot(node);
-    const optionSources=traceOptionSources(node);
     return {
-      investigatorVersion:'0.2.2',
-      mappingVersion:'3-investigator',
+      investigatorVersion:VERSION,
+      mappingVersion:FIELD_MAPPING_VERSION,
+      captureType:'field',
       capturedAt:new Date().toISOString(),
       route:location.pathname,
       field:meta,
       options,
-      optionSources,
+      optionSources:traceOptionSources(node),
       ko:koInfo,
       resourceMatches:resourceMatches(meta,koInfo,options),
       notes:[
@@ -283,30 +281,154 @@
         out.push({field:meta,options,optionSources:traceOptionSources(node),ko:koInfo,resourceMatches:resourceMatches(meta,koInfo,options)});
       }
     }
-    return {investigatorVersion:'0.2.2',mappingVersion:'3-investigator',capturedAt:new Date().toISOString(),route:location.pathname,fields:out};
+    return {investigatorVersion:VERSION,mappingVersion:FIELD_MAPPING_VERSION,captureType:'field-scan',capturedAt:new Date().toISOString(),route:location.pathname,fields:out};
+  }
+
+  function actionCandidate(el) {
+    if (!(el instanceof Element)) return false;
+    const bind = norm(el.getAttribute('data-bind'));
+    return el.matches('button,[role="button"],a[href],input[type="button"],input[type="submit"],.grid-button,.top-pane-button,.loginButton,.link') || /(?:^|[,\s])(?:click|submit)\s*:/i.test(bind) || /event\s*:\s*\{/i.test(bind);
+  }
+
+  function safeActionAttributes(el) {
+    const keep = ['type','id','name','class','role','title','aria-label','href','data-bind','disabled','style'];
+    const out = {};
+    for (const k of keep) {
+      const v = el.getAttribute?.(k);
+      if (v != null && v !== '') out[k] = v;
+    }
+    return out;
+  }
+
+  function actionMeta(el) {
+    const rect = el.getBoundingClientRect?.();
+    return {
+      text:norm(el.textContent).replace(/\s+/g,' ').slice(0,300),
+      tag:el.tagName||null,
+      type:el.getAttribute?.('type')||null,
+      id:el.id||null,
+      name:el.getAttribute?.('name')||null,
+      classes:typeof el.className==='string'?el.className:null,
+      role:el.getAttribute?.('role')||null,
+      title:el.getAttribute?.('title')||null,
+      ariaLabel:el.getAttribute?.('aria-label')||null,
+      href:el.getAttribute?.('href')||null,
+      onclickAttribute:el.getAttribute?.('onclick')||null,
+      dataBind:el.getAttribute?.('data-bind')||null,
+      attributes:safeActionAttributes(el),
+      rect:rect?{x:Math.round(rect.x),y:Math.round(rect.y),width:Math.round(rect.width),height:Math.round(rect.height)}:null,
+      ancestors:[...function*(){let n=el;for(let i=0;n&&i<8;i++,n=n.parentElement)yield{depth:i,tag:n.tagName||null,id:n.id||null,classes:typeof n.className==='string'?n.className:null,dataBind:n.getAttribute?.('data-bind')||null,role:n.getAttribute?.('role')||null,ariaLabel:n.getAttribute?.('aria-label')||null};}()]
+    };
+  }
+
+  function actionKoContexts(el) {
+    const out=[];
+    for(const [depth,x] of contextChain(el).entries()) {
+      const d=x.data;
+      const dataKeys=Object.keys(d||{}).slice(0,260);
+      const likelyFunctions=[];
+      const interesting={};
+      for(const k of dataKeys) {
+        let v;
+        try { v=unwrap(d[k]); } catch { continue; }
+        if(typeof d[k]==='function' && /(click|open|close|show|hide|toggle|navigate|save|post|finish|transfer|select|generate|handle|display|load|move|lock|cad|validation)/i.test(k)) likelyFunctions.push(k);
+        if(!/(id|label|type|binding|control|status|selected|identifier|modal|move|read|save|incident|detail|option|value|min|max|show|form)/i.test(k)) continue;
+        if(primitive(v)) interesting[k]=v;
+        else if(Array.isArray(v)) interesting[k]={type:'array',length:v.length};
+        else if(v&&typeof v==='object') interesting[k]={type:'object',keys:Object.keys(v).slice(0,40)};
+      }
+      out.push({depth,tag:x.el.tagName||null,id:x.el.id||null,classes:typeof x.el.className==='string'?x.el.className:null,dataKeys,likelyFunctions:likelyFunctions.slice(0,120),interesting});
+    }
+    return out;
+  }
+
+  function inspectAction(el) {
+    return {
+      investigatorVersion:VERSION,
+      mappingVersion:ACTION_MAPPING_VERSION,
+      captureType:'action',
+      capturedAt:new Date().toISOString(),
+      route:location.pathname,
+      action:actionMeta(el),
+      associatedField:fieldMeta(nearestFieldNode(el)),
+      koContexts:actionKoContexts(el),
+      notes:[
+        'Read-only action capture.',
+        'The target action was intercepted before normal click execution.',
+        'No ImageTrend button action was intentionally fired.',
+        'Knockout function names are reported when visible in the current binding context.',
+        'Associated field metadata is provided separately because action buttons may inherit the surrounding control context.'
+      ]
+    };
+  }
+
+  function scanActions() {
+    const root=document.querySelector('#form-composer')||document.querySelector('#center-pane')||document;
+    const seen=new Set(),actions=[];
+    for(const el of root.querySelectorAll('button,[role="button"],a[href],input[type="button"],input[type="submit"],[data-bind],.grid-button,.top-pane-button,.loginButton,.link')) {
+      if(!actionCandidate(el)) continue;
+      const meta=actionMeta(el);
+      const key=`${meta.tag}|${meta.id||''}|${meta.text}|${meta.dataBind||''}`;
+      if(seen.has(key))continue;
+      seen.add(key);
+      actions.push({action:meta,koContexts:actionKoContexts(el)});
+      if(actions.length>=500)break;
+    }
+    return {investigatorVersion:VERSION,mappingVersion:ACTION_MAPPING_VERSION,captureType:'action-scan',capturedAt:new Date().toISOString(),route:location.pathname,actions};
   }
 
   const host=document.createElement('div');
   host.id=HOST_ID;
-  host.style.cssText='position:fixed;right:18px;bottom:18px;z-index:2147483647';
+  host.style.cssText='position:fixed;right:10px;bottom:10px;z-index:2147483647';
   const shadow=host.attachShadow({mode:'open'});
-  shadow.innerHTML=`<style>:host{font:13px system-ui;color:#e6edf3}button{font:inherit;cursor:pointer;color:#e6edf3;background:#17212b;border:1px solid #2dd4bf;border-radius:8px}.launch{border:1px solid #2dd4bf;border-radius:999px;padding:9px 12px;background:#111827;color:#d1fae5;box-shadow:0 4px 16px #0007}.panel{width:460px;max-width:90vw;max-height:74vh;overflow:auto;background:#0f1720;border:2px solid #2dd4bf;border-radius:12px;padding:12px;box-shadow:0 10px 30px #0008}.row{display:flex;gap:6px;flex-wrap:wrap;margin:7px 0}.row button{padding:7px 9px}.row button:hover{background:#1f2937}.status{font-size:12px;margin:6px 0;color:#99f6e4}pre{white-space:pre-wrap;word-break:break-word;background:#09111a;color:#cbd5e1;border:1px solid #334155;padding:8px;border-radius:6px;max-height:44vh;overflow:auto}small{display:block;line-height:1.35;color:#94a3b8}.hide{float:right}</style><button class="launch">Field Investigator</button><div class="panel" hidden><button class="hide">×</button><strong>Gremlin Field Investigator 0.2.2</strong><small>Read-only. Tap/focus a field, or open its flyout/dropdown first. v0.2 traces Knockout option sources and survives Safari interceptor overlays.</small><div class="row"><button id="inspect">Inspect focused field</button><button id="scan">Scan visible tree</button><button id="pick">Pick next field</button></div><div class="row"><button id="copy">Copy JSON</button><button id="clear">Clear</button></div><div class="status">Idle.</div><pre>{}</pre></div>`;
+  shadow.innerHTML=`<style>
+    :host{font:12px system-ui;color:#e6edf3}button{font:inherit;cursor:pointer;color:#e6edf3;background:#17212b;border:1px solid #2dd4bf;border-radius:7px}
+    .launch{border-radius:999px;padding:7px 10px;background:#111827;color:#d1fae5;box-shadow:0 4px 14px #0007}
+    .panel{width:330px;max-width:84vw;max-height:56vh;overflow:auto;background:#0f1720;border:1px solid #2dd4bf;border-radius:10px;padding:9px;box-shadow:0 10px 28px #0008}
+    .head{display:flex;justify-content:space-between;align-items:center}.hide{border:0;background:transparent;font-size:18px;padding:0 4px}.row{display:flex;gap:4px;flex-wrap:wrap;margin:5px 0}.row button{padding:5px 7px}.status{font-size:11px;margin:5px 0;color:#99f6e4}.jsonbar{display:flex;justify-content:space-between;align-items:center;margin-top:5px}
+    pre{white-space:pre-wrap;word-break:break-word;background:#09111a;color:#cbd5e1;border:1px solid #334155;padding:6px;border-radius:6px;max-height:180px;overflow:auto;font-size:10px;margin:5px 0 0}pre[hidden]{display:none}small{display:block;line-height:1.3;color:#94a3b8}
+  </style><button class="launch">Investigator</button><div class="panel" hidden><div class="head"><strong>Field Investigator ${VERSION}</strong><button class="hide">×</button></div><small>Read-only. Pick mode intercepts one tap so the ImageTrend action does not fire.</small><div class="row"><button id="pick-field">Pick field</button><button id="inspect-field">Focused field</button><button id="scan-fields">Scan fields</button></div><div class="row"><button id="pick-action">Pick action</button><button id="scan-actions">Scan actions</button></div><div class="row"><button id="copy">Copy JSON</button><button id="clear">Clear</button></div><div class="status">Idle.</div><div class="jsonbar"><small id="summary">No capture.</small><button id="toggle-json">Show JSON</button></div><pre hidden>{}</pre></div>`;
   document.body.append(host);
 
-  const $=s=>shadow.querySelector(s); let result={},lastTarget=null,picking=false;
+  const $=s=>shadow.querySelector(s);
+  let result={},lastTarget=null,pickMode=null;
   const status=t=>$('.status').textContent=t;
-  const render=r=>{result=r;$('pre').textContent=JSON.stringify(r,null,2);};
+  const summarize=r=>{
+    if(r.captureType==='field')return r.field?.Label||r.field?.BindingPath||r.field?.ControlID||'Field captured';
+    if(r.captureType==='field-scan')return `${r.fields?.length||0} fields captured`;
+    if(r.captureType==='action')return r.action?.text||r.action?.dataBind||'Action captured';
+    if(r.captureType==='action-scan')return `${r.actions?.length||0} actions captured`;
+    return 'No capture.';
+  };
+  const render=r=>{result=r;$('pre').textContent=JSON.stringify(r,null,2);$('#summary').textContent=summarize(r);};
+
   document.addEventListener('pointerdown',e=>{
     if(e.composedPath?.().includes(host))return;
     lastTarget=e.target;
-    if(picking){picking=false;setTimeout(()=>{const r=inspectElement(lastTarget);render(r);status(`Captured ${r.field.Label||r.field.BindingPath||r.field.ControlID||r.field.tag||'field'}.`);},80);}
+    if(!pickMode)return;
+    const mode=pickMode;pickMode=null;
+    if(mode==='action'){
+      e.preventDefault();e.stopImmediatePropagation();
+      const target=[...e.composedPath()].find(x=>x instanceof Element&&actionCandidate(x))||e.target;
+      setTimeout(()=>{const r=inspectAction(target);render(r);status(`Captured action: ${summarize(r)}.`);},20);
+    }else{
+      setTimeout(()=>{const r=inspectElement(e.target);render(r);status(`Captured field: ${summarize(r)}.`);},60);
+    }
+  },true);
+  document.addEventListener('click',e=>{
+    if(e.composedPath?.().includes(host))return;
+    if(pickMode==='action'){e.preventDefault();e.stopImmediatePropagation();}
   },true);
   document.addEventListener('focusin',e=>{if(!e.composedPath?.().includes(host))lastTarget=e.target;},true);
+
   $('.launch').onclick=()=>{$('.panel').hidden=false;$('.launch').hidden=true;};
   $('.hide').onclick=()=>{$('.panel').hidden=true;$('.launch').hidden=false;};
   $('#clear').onclick=()=>{render({});status('Cleared.');};
-  $('#pick').onclick=()=>{picking=true;status('Tap the ImageTrend field to investigate.');};
-  $('#inspect').onclick=()=>{const target=lastTarget||document.activeElement;if(!target||target===document.body)return status('Tap/focus an ImageTrend field first.');const r=inspectElement(target);render(r);status(`Captured ${r.field.Label||r.field.BindingPath||r.field.ControlID||r.field.tag||'field'}.`);};
-  $('#scan').onclick=()=>{status('Scanning visible controls and option sources…');const r=scanVisibleFields();render(r);status(`Captured ${r.fields.length} visible field records.`);};
+  $('#pick-field').onclick=()=>{pickMode='field';status('Tap the ImageTrend field to investigate.');};
+  $('#pick-action').onclick=()=>{pickMode='action';status('Tap the ImageTrend action. This one tap will be intercepted.');};
+  $('#inspect-field').onclick=()=>{const target=lastTarget||document.activeElement;if(!target||target===document.body)return status('Tap/focus an ImageTrend field first.');const r=inspectElement(target);render(r);status(`Captured field: ${summarize(r)}.`);};
+  $('#scan-fields').onclick=()=>{status('Scanning visible fields…');const r=scanVisibleFields();render(r);status(`Captured ${r.fields.length} field records.`);};
+  $('#scan-actions').onclick=()=>{status('Scanning visible actions…');const r=scanActions();render(r);status(`Captured ${r.actions.length} action records.`);};
+  $('#toggle-json').onclick=()=>{const p=$('pre');p.hidden=!p.hidden;$('#toggle-json').textContent=p.hidden?'Show JSON':'Hide JSON';};
   $('#copy').onclick=async()=>{const text=JSON.stringify(result,null,2);try{await navigator.clipboard.writeText(text);status('JSON copied.');}catch{const ta=document.createElement('textarea');ta.value=text;document.body.append(ta);ta.select();document.execCommand('copy');ta.remove();status('JSON copied (fallback).');}};
 })();
