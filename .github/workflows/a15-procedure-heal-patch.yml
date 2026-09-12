@@ -1,0 +1,90 @@
+name: A15 procedure self-heal patch
+
+on:
+  push:
+    paths:
+      - '.github/workflows/a15-procedure-heal-patch.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Widen procedure self-heal
+        shell: python
+        run: |
+          from pathlib import Path
+
+          p = Path('imagetrend-a15-native-test.user.js')
+          s = p.read_text()
+          s = s.replace('0.2.4.16','0.2.4.17')
+
+          old = """  function procedureName(entry){
+    const ko=window.ko,answer=ko.unwrap(entry.PatientProcedureProcedurePerformedModValue);
+    const code=ko.unwrap(answer?.PlusOneCode)||ko.unwrap(answer?.ProcedurePerformed);
+    const canonical=x=>norm(x).replace(/\\s+/g,' ').replace(/\\s*-\\s*/g,'-').toLowerCase();
+    const candidates=[...new Set(Object.values(window.imagetrend.formComposer.agencyResources||{}).flatMap(r=>(r?.Elements||[]).filter(e=>String(e.Id)===String(code)).map(e=>canonical(e.Value))))];
+    if(!candidates.length)throw Error('Procedure code has no loaded display mapping. Open its entry and preview again.');
+    if(candidates.length!==1)throw Error('Procedure code has conflicting display mappings.');
+    const known=procedureNames.find(n=>canonical(n)===candidates[0]);
+    return known || null;
+  }
+"""
+          new = """  function procedureName(entry,{quiet=false}={}){
+    const ko=window.ko,answer=ko.unwrap(entry.PatientProcedureProcedurePerformedModValue);
+    const code=ko.unwrap(answer?.PlusOneCode)||ko.unwrap(answer?.ProcedurePerformed);
+    const canonical=x=>norm(x).replace(/\\s+/g,' ').replace(/\\s*-\\s*/g,'-').toLowerCase();
+    const candidates=[...new Set(Object.values(window.imagetrend.formComposer.agencyResources||{}).flatMap(r=>(r?.Elements||[]).filter(e=>String(e.Id)===String(code)).map(e=>canonical(e.Value))))];
+    if(!candidates.length){if(quiet)return null;throw Error('Procedure code has no loaded display mapping. Open its entry and preview again.');}
+    if(candidates.length!==1){if(quiet)return null;throw Error('Procedure code has conflicting display mappings.');}
+    const known=procedureNames.find(n=>canonical(n)===candidates[0]);
+    return known || null;
+  }
+"""
+          if old not in s:
+              raise SystemExit('procedureName block not found')
+          s = s.replace(old,new,1)
+
+          old = """    return entries.map((entry,i)=>({...c,entry,label:c.label,entryLabel:(path.includes('.Vitals[]')?'Vital':'Procedure')+' '+(i+1)}));
+"""
+          new = """    return entries.flatMap((entry,i)=>{
+      if(path.includes('.PatientProcedures[]')&&!procedureName(entry,{quiet:true}))return [];
+      return [{...c,entry,label:c.label,entryLabel:(path.includes('.Vitals[]')?'Vital':'Procedure')+' '+(i+1)}];
+    });
+"""
+          if old not in s:
+              raise SystemExit('expandChoice return block not found')
+          s = s.replace(old,new,1)
+
+          old = """    const names=entries.map(procedureName); // Unknown entries block creation, never assume missing.
+    const missing=procedureNames.filter(n=>!names.includes(n));
+    if(!missing.length)return null;
+"""
+          new = """    const classified=entries.map(entry=>({entry,name:procedureName(entry,{quiet:true})}));
+    const names=classified.map(x=>x.name).filter(Boolean);
+    const missing=procedureNames.filter(n=>!names.includes(n));
+    if(!missing.length)return null;
+    // Foreign or unresolved procedures are preserved and do not block repairs on recognized A15 entries.
+    // Creation remains conservative: never create possible duplicates while an existing procedure identity is unresolved.
+    if(classified.some(x=>!x.name))throw Error('Unrecognized existing procedure preserved; A15 procedure creation deferred.');
+"""
+          if old not in s:
+              raise SystemExit('creationPlan inventory block not found')
+          s = s.replace(old,new,1)
+
+          p.write_text(s)
+
+          r = Path('README.md')
+          t = r.read_text().replace('Gremlin Logic 0.2.4.16','Gremlin Logic 0.2.4.17').replace('RELEASE-0.2.4.16.md','RELEASE-0.2.4.17.md')
+          r.write_text(t)
+          Path('RELEASE-0.2.4.17.md').write_text('''# Gremlin Logic A15 0.2.4.17\n\n## Procedure self-heal widening\n\n- Existing non-A15 or unresolved procedures are preserved and ignored by A15 field-repair scans instead of generating failures for every procedure rule.\n- Recognized A15 procedures continue through crew/role/authorization/success/timestamp reconciliation even when unrelated procedures are present.\n- Missing-procedure creation remains conservative: if any existing procedure identity cannot be resolved, A15 defers creation rather than risk a duplicate.\n- This specifically addresses imported monitor procedures such as a 4-lead ECG blocking downstream repair.\n''')
+      - name: Commit patch
+        run: |
+          git config user.name "gremlinlogic-bot"
+          git config user.email "34165603+bljscrivener@users.noreply.github.com"
+          git add imagetrend-a15-native-test.user.js README.md RELEASE-0.2.4.17.md
+          git commit -m "Widen A15 procedure self-heal around foreign entries"
+          git push
