@@ -1,0 +1,99 @@
+name: GFI 0.3.3 iPad share export patch
+
+on:
+  push:
+    paths:
+      - '.github/workflows/gfi-0.3.3-ipad-share-export.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch GFI with native file share
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          p = Path('troubleshooters/gremlin-universal-investigator.user.js')
+          s = p.read_text()
+
+          s = s.replace('// @version      0.3.2', '// @version      0.3.3', 1)
+          s = s.replace("const VERSION = '0.3.2';", "const VERSION = '0.3.3';", 1)
+
+          anchor = """  function exportFilename(r=result) {
+    return r?.header?.exportHints?.suggestedFilename || `gfi-${new Date().toISOString().replace(/[:.]/g,'-')}.json`;
+  }
+"""
+          addition = anchor + r'''
+
+  function makeExportFile(text, filename, mime='text/plain') {
+    try { return new File([text], filename, { type:mime, lastModified:Date.now() }); }
+    catch { return null; }
+  }
+
+  async function shareExportFile(text, filename, mime='text/plain') {
+    const file = makeExportFile(text, filename, mime);
+    if (!file || typeof navigator.share !== 'function') return { ok:false, reason:'unsupported' };
+    try {
+      if (typeof navigator.canShare === 'function' && !navigator.canShare({ files:[file] })) {
+        return { ok:false, reason:'unsupported' };
+      }
+      await navigator.share({ files:[file], title:filename });
+      return { ok:true };
+    } catch (err) {
+      if (err?.name === 'AbortError') return { ok:false, reason:'cancelled' };
+      return { ok:false, reason:'failed', error:err };
+    }
+  }
+
+  function pageChatText() {
+    if (!result?.header) return null;
+    return `GFI NORMALIZED CAPTURE\nSchema: ${SCHEMA_VERSION}\nInvestigator: ${VERSION}\nCapture: ${result.header.captureType || ''}\nCaptured: ${result.header.capturedAt || ''}\nPage: ${result.header.page?.title || document.title || ''}\nOrigin: ${result.header.page?.origin || location.origin}\n\n--- JSON ---\n${JSON.stringify(result,null,2)}`;
+  }
+
+  async function sharePageForChat() {
+    if (!result?.header) return { ok:false, reason:'empty' };
+    const text = pageChatText();
+    const filename = exportFilename(result).replace(/\.json$/i,'.txt');
+    const shared = await shareExportFile(text, filename, 'text/plain');
+    if (shared.ok || shared.reason === 'cancelled') return shared;
+    const downloaded = downloadText(text, filename, 'text/plain');
+    return { ok:downloaded, reason:downloaded ? 'downloaded' : shared.reason };
+  }
+'''
+          if anchor not in s:
+              raise SystemExit('exportFilename anchor not found')
+          s = s.replace(anchor, addition, 1)
+
+          # Add a dedicated Share button beside the existing export controls.
+          old = '<button id="export-json">Export capture</button><button id="export-page">Export page for chat</button>'
+          new = '<button id="export-json">Export capture</button><button id="export-page">Export page for chat</button><button id="share-page">Share file</button>'
+          if old not in s:
+              raise SystemExit('export button row not found')
+          s = s.replace(old, new, 1)
+
+          old_handler = "  $('#export-page').onclick=()=>status(exportPageChatFile()?'Page scan exported as chat-ready JSON.':'Run Page scan first.');\n"
+          new_handler = old_handler + "  $('#share-page').onclick=async()=>{const r=await sharePageForChat();status(r.ok?(r.reason==='downloaded'?'Native share unavailable; file downloaded.':'Share sheet opened for capture file.'):(r.reason==='cancelled'?'Share cancelled.':'Capture something first.'));};\n"
+          if old_handler not in s:
+              raise SystemExit('export-page handler not found')
+          s = s.replace(old_handler, new_handler, 1)
+
+          help_anchor = '<p><strong>Export page for chat:</strong> after Page scan, downloads a portable .json bundle containing the header, page inventory and observations so it can be uploaded directly into ChatGPT.</p>'
+          help_new = help_anchor + '<p><strong>Share file:</strong> creates the capture as a real .txt File and opens the native iPad/iPhone share sheet. Choose ChatGPT to hand the file to the app. If file sharing is unavailable, GFI falls back to a normal download. The page is never submitted or modified.</p>'
+          if help_anchor not in s:
+              raise SystemExit('help anchor not found')
+          s = s.replace(help_anchor, help_new, 1)
+
+          p.write_text(s)
+          PY
+      - name: Commit GFI 0.3.3
+        run: |
+          git config user.name "gremlinlogic-bot"
+          git config user.email "34165603+bljscrivener@users.noreply.github.com"
+          git add troubleshooters/gremlin-universal-investigator.user.js
+          git commit -m "GFI 0.3.3: native iPad share export" || exit 0
+          git push
