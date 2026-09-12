@@ -1,6 +1,6 @@
 name: A15 procedure self-heal patch
 
-on:
+"on":
   push:
     paths:
       - '.github/workflows/a15-procedure-heal-patch.yml'
