@@ -1,0 +1,25 @@
+name: A15 iPad time target patch v2
+
+on:
+  push:
+    paths:
+      - 'tools/patch_a15_ipad_time.py'
+      - '.github/workflows/a15-ipad-time-target-patch-v2.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch A15
+        run: python3 tools/patch_a15_ipad_time.py
+      - name: Commit changes
+        run: |
+          git config user.name gremlinlogic-bot
+          git config user.email 34165603+bljscrivener@users.noreply.github.com
+          git add imagetrend-a15-native-test.user.js README.md RELEASE-0.2.4.18.md
+          git commit -m 'Harden timestamp target recovery on iPad Safari'
+          git push
