@@ -1,5 +1,19 @@
 # Gremlin troubleshooters
 
+## Field Investigator 0.1.0
+
+[Install the userscript](https://raw.githubusercontent.com/bljscrivener/imagetrend-a15-native-test/main/troubleshooters/gremlin-field-investigator.user.js)
+
+Standalone, read-only mapping investigator for ImageTrend controls. It does not write chart data or call chart Save.
+
+Use **Pick next field** and then tap an ImageTrend control, or focus/open a control/flyout and choose **Inspect focused field**. The investigator captures the nearest native field metadata, BindingPath/BindingPathEntryID/ControlID when exposed, DOM option labels/values, selected Knockout context metadata, and ranked matches from `imagetrend.formComposer.agencyResources`. **Scan visible tree** performs the same style of capture across the currently exposed form/flyout controls.
+
+The copied JSON uses `mappingVersion: "2-investigator"`. Resource matches are ranked candidates rather than guaranteed ownership. Patient-entered scalar values are intentionally omitted from export; the tool is intended to recover native field structure and option vocabularies such as IV gauge/site, medication route/unit, procedure choices, and assessment options.
+
+Recommended workflow: open the specific procedure/medication/assessment flyout, expand the dropdown if practical, tap **Pick next field**, tap the target control, then **Copy JSON**. If the field is not directly selectable, use **Scan visible tree** and search the output by BindingPath or ControlID.
+
+Disable/remove the investigator when mapping work is finished. It is deliberately separate from A15 so experimental inspection logic cannot interfere with production chart writes.
+
 ## Crew Auditor 0.1.0
 
 [Install the userscript](https://raw.githubusercontent.com/bljscrivener/imagetrend-a15-native-test/main/troubleshooters/gremlin-crew-auditor.user.js)
