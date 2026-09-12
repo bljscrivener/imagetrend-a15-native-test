@@ -4,14 +4,26 @@ This directory is the development-stage replacement architecture for the monolit
 
 ## Architectural boundary
 
-A15 now has an explicit controller/skin boundary.
+A15 has an explicit mechanism/controller/skin boundary.
 
 - `a15-control-center.user.js` is **headless**. It owns no DOM. It exposes the stable `window.GremlinA15` bridge (`getState()`, `subscribe()`, and `actions`).
 - `a15-gui.user.js` is a **replaceable skin**. It may render controls, collect user intent, and display state, but it may only talk to the mechanism through `window.GremlinA15`.
-- GUI code must not query ImageTrend fields, call Knockout, invoke `imagetrend.*`, or contain chart mutation logic.
+- `a15-legacy-execution-bridge.user.js` is a **transitional mechanism adapter**. It exposes the already-validated monolithic Preview/Apply execution path headlessly while the native modular executor is completed. It also suppresses the duplicate legacy chrome.
+- GUI code must not query ImageTrend fields, call Knockout, invoke internal ImageTrend mutation code, or own chart mutation logic.
 - Mechanism modules must not depend on the GUI being present. A15 must remain operable headlessly for testing and future alternate skins.
 
 This is a hard boundary, not a style preference. The GUI can be redesigned, replaced, minimized, or removed without changing the mechanism.
+
+## Current skin contract
+
+The compact skin intentionally has one primary control:
+
+- The circular **A15** orb performs **Go, baby, go** only.
+- The loaded profile name is displayed immediately beneath the orb.
+- Clicking the profile name opens the secondary panel for findings, actions, diagnostics, and settings.
+- The orb never opens settings and never performs UI navigation. It only sends the execution request through `window.GremlinA15.actions.goBabyGo()`.
+
+The GUI therefore remains a skin even though the primary control invokes chart work: all review, execution, safety, and mutation behavior lives behind the public bridge.
 
 ## Load order
 
@@ -26,8 +38,9 @@ This is a hard boundary, not a style preference. The GUI can be redesigned, repl
 9. `a15-clinical-logic.user.js` — saline-flush helper and reusable route/access consistency rule.
 10. `a15-ai-bridge.user.js` — explicit bridge to ImageTrend's native AI Capture / AI Generate Values surfaces.
 11. `a15-protocol-assist.user.js` — persistent declarative protocol packs; ships with no protocol content until a validated manual is ingested.
-12. `a15-control-center.user.js` — headless application/controller bridge; publishes `window.GremlinA15`.
-13. `a15-gui.user.js` — current iPad-friendly presentation skin; depends only on the public bridge.
+12. `a15-legacy-execution-bridge.user.js` — transitional adapter from modular controller to the validated monolithic execution engine.
+13. `a15-control-center.user.js` — headless application/controller bridge; publishes `window.GremlinA15`.
+14. `a15-gui.user.js` — current iPad-friendly presentation skin; depends only on the public bridge.
 
 `manifest.json` is the machine-readable dependency/load-order record.
 
@@ -41,6 +54,8 @@ window.GremlinA15 = {
   getState(),
   subscribe(listener),
   actions: {
+    goBabyGo(),
+    reviewExecution(),
     evaluate(),
     remap(),
     compatibilityCheck(),
@@ -86,6 +101,6 @@ No persistent store above is intended to contain patient chart values.
 
 ## Current validation state
 
-The modular implementation is written, but it is **not yet promoted over the production A15 userscript**. Required next gate is live iPad/ImageTrend validation of module load order, bridge/GUI separation, resolver behavior, select/read-back behavior, saline-flush medication editing, findings navigation, profile persistence, reconstruction drift handling, and native AI invocation.
+The modular implementation is written, but it is **not yet promoted over the production A15 userscript**. The current execution adapter intentionally reuses the production monolith's validated Preview/Apply path rather than reimplementing it inside the skin.
 
-The protocol framework is complete as mechanism, but protocol content remains intentionally empty until a stable protocol manual is obtained and reviewed. Numeric procedure-equipment semantics also remain intentionally unresolved and quarantined.
+Required next gate is live iPad/ImageTrend validation that: the legacy chrome disappears, the A15 orb performs review+execution through the bridge, the profile label opens settings, errors fail closed, and the existing chart Save/submit boundary remains untouched.
