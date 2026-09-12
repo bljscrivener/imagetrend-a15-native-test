@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Gremlin Logic A15 Model Bridge
 // @namespace    local.imagetrend.a15native.bridge
-// @version      0.1.1
+// @version      0.1.2
 // @description  Fail-closed live ImageTrend field resolver and explicit write bridge for A15 modules.
 // @match        https://*.imagetrendelite.com/Elite/*
 // @grant        none
@@ -13,7 +13,7 @@
   'use strict';
 
   const MODULE_ID = 'model-bridge';
-  const VERSION = '0.1.1';
+  const VERSION = '0.1.2';
   const knownFields = new Map();
   const norm = v => (v == null ? '' : String(v)).trim();
   const unwrap = v => { try { return window.ko?.unwrap ? window.ko.unwrap(v) : (typeof v === 'function' ? v() : v); } catch { return undefined; } };
@@ -174,10 +174,16 @@
 
   function safetyCheck(scope) {
     const safety = window.GremlinA15Safety;
-    if (!safety?.canMutate) return { ok: true, reason: 'safety-module-not-loaded' };
+    if (!safety?.canMutate) return { ok: false, reason: 'safety-module-unavailable' };
     const gate = safety.canMutate();
     if (!gate.ok) window.GremlinA15Runtime?.emit?.('write-blocked', { scope, reason: gate.reason });
     return gate;
+  }
+
+  function protectionCheck(meta, proposedValue) {
+    const protectedFields = window.GremlinA15ProtectedFields;
+    if (!protectedFields?.check) return { allowed: false, reason: 'protected-field-policy-unavailable' };
+    return protectedFields.check({ entryId: meta?.entryId, bindingPath: meta?.bindingPath, controlId: meta?.controlId }, proposedValue);
   }
 
   function recordOutcome(scope, result) {
@@ -194,14 +200,17 @@
     const meta = resolve(target);
     if (!meta) {
       const out = { ok: false, reason: 'field-not-resolved' };
-      recordOutcome('selectByLabel', out);
-      return out;
+      recordOutcome('selectByLabel', out); return out;
     }
     const found = findOption(meta, labels, options);
     if (!found) {
       const out = { ok: false, reason: 'option-not-found', field: brief(meta) };
-      recordOutcome('selectByLabel', out);
-      return out;
+      recordOutcome('selectByLabel', out); return out;
+    }
+    const protection = protectionCheck(meta, optionLabel(found.item));
+    if (!protection.allowed) {
+      const out = { ok: false, reason: 'protected-field-quarantine', field: brief(meta), detail: protection.reason };
+      recordOutcome('selectByLabel', out); return out;
     }
 
     const contexts = resourcesFromContext(meta).contexts;
@@ -224,16 +233,14 @@
     }
     if (!invoked) {
       const out = { ok: false, reason: 'selection-function-unavailable', field: brief(meta) };
-      recordOutcome('selectByLabel', out);
-      return out;
+      recordOutcome('selectByLabel', out); return out;
     }
     await new Promise(r => setTimeout(r, 80));
     const selectedLabel = optionLabel(found.item);
     const displayed = readDisplay(meta);
     const ok = !displayed || displayed.toLowerCase().includes(selectedLabel.toLowerCase()) || selectedLabel.toLowerCase().includes(displayed.toLowerCase());
     const out = { ok, reason: ok ? null : 'verification-failed', field: brief(meta), selectedLabel, displayed };
-    recordOutcome('selectByLabel', out);
-    return out;
+    recordOutcome('selectByLabel', out); return out;
   }
 
   async function setValue(target, value, { verify = true } = {}) {
@@ -243,32 +250,27 @@
     const meta = resolve(target);
     if (!meta) {
       const out = { ok: false, reason: 'field-not-resolved' };
-      recordOutcome('setValue', out);
-      return out;
+      recordOutcome('setValue', out); return out;
+    }
+    const protection = protectionCheck(meta, value);
+    if (!protection.allowed) {
+      const out = { ok: false, reason: 'protected-field-quarantine', field: brief(meta), detail: protection.reason };
+      recordOutcome('setValue', out); return out;
     }
     const el = inputOf(meta);
     if (!nativeSet(el, value)) {
       const out = { ok: false, reason: 'unsupported-control', field: brief(meta) };
-      recordOutcome('setValue', out);
-      return out;
+      recordOutcome('setValue', out); return out;
     }
     await new Promise(r => setTimeout(r, 60));
     const displayed = readDisplay(meta);
     const ok = !verify || norm(displayed) === norm(value);
     const out = { ok, reason: ok ? null : 'verification-failed', field: brief(meta), displayed };
-    recordOutcome('setValue', out);
-    return out;
+    recordOutcome('setValue', out); return out;
   }
 
   function brief(meta) {
-    return meta ? {
-      entryId: meta.entryId || null,
-      bindingPath: meta.bindingPath || null,
-      controlId: meta.controlId ?? null,
-      formId: meta.formId || null,
-      label: meta.label || null,
-      controlType: meta.controlType || null
-    } : null;
+    return meta ? { entryId: meta.entryId || null, bindingPath: meta.bindingPath || null, controlId: meta.controlId ?? null, formId: meta.formId || null, label: meta.label || null, controlType: meta.controlType || null } : null;
   }
 
   function registerField(id, descriptor) {
@@ -293,15 +295,8 @@
   Object.defineProperty(window, 'GremlinA15Bridge', { value: api, enumerable: false, configurable: false, writable: false });
 
   waitForRuntime().then(runtime => {
-    runtime.registerModule({
-      id: MODULE_ID,
-      version: VERSION,
-      description: 'Live field resolver and explicit, verified write bridge. Values are never persisted by this module.',
-      defaultEnabled: true,
-      start: async () => runtime.emit('model-bridge-ready', {}),
-      stop: async () => {}
-    });
-    runtime.registerCapability('gremlin.modelBridge', () => ({ available: true, visibleFields: allFieldMetas().length, safetyGuard: !!window.GremlinA15Safety }));
+    runtime.registerModule({ id: MODULE_ID, version: VERSION, description: 'Live field resolver and explicit, verified write bridge. Values are never persisted by this module.', defaultEnabled: true, start: async () => runtime.emit('model-bridge-ready', {}), stop: async () => {} });
+    runtime.registerCapability('gremlin.modelBridge', () => ({ available: true, visibleFields: allFieldMetas().length, safetyGuard: !!window.GremlinA15Safety, protectedFieldPolicy: !!window.GremlinA15ProtectedFields }));
     runtime.startModule(MODULE_ID);
   }).catch(() => {});
 })();
