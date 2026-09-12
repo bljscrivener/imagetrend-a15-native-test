@@ -1,0 +1,129 @@
+name: GFI 0.3.2 read-only export/help patch
+
+on:
+  push:
+    paths:
+      - '.github/workflows/gfi-0.3.2-readonly-export-help.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch Gremlin Universal Investigator
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          p = Path('troubleshooters/gremlin-universal-investigator.user.js')
+          s = p.read_text()
+
+          s = s.replace('// @version      0.3.1', '// @version      0.3.2', 1)
+          s = s.replace("const VERSION = '0.3.1';", "const VERSION = '0.3.2';", 1)
+
+          old_copy = """  async function copyText(text) {
+    try { await navigator.clipboard.writeText(text); return true; }
+    catch {
+      try { const ta=document.createElement('textarea');ta.value=text;ta.style.position='fixed';ta.style.opacity='0';document.body.append(ta);ta.select();document.execCommand('copy');ta.remove();return true; }
+      catch { return false; }
+    }
+  }
+"""
+          new_copy = old_copy + """
+  function downloadText(text, filename, mime='application/json') {
+    try {
+      const blob = new Blob([text], {type:mime});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename || 'gfi-capture.json';
+      a.style.display = 'none';
+      document.documentElement.append(a);
+      a.click();
+      a.remove();
+      setTimeout(()=>URL.revokeObjectURL(url), 1500);
+      return true;
+    } catch { return false; }
+  }
+
+  function exportFilename(r=result) {
+    return r?.header?.exportHints?.suggestedFilename || `gfi-${new Date().toISOString().replace(/[:.]/g,'-')}.json`;
+  }
+
+  function exportCaptureFile() {
+    if (!result?.header) return false;
+    return downloadText(JSON.stringify(result,null,2), exportFilename(result));
+  }
+
+  function exportPageChatFile() {
+    if (result?.header?.captureType !== 'page-scan') return false;
+    const bundle = {
+      format:'gfi.chat-page-export/1',
+      purpose:'Portable read-only page scan for analysis in ChatGPT or another JSON-capable tool.',
+      exportedAt:new Date().toISOString(),
+      capture:result
+    };
+    const base = exportFilename(result).replace(/\\.json$/i,'');
+    return downloadText(JSON.stringify(bundle,null,2), `${base}-chat.json`);
+  }
+"""
+          if old_copy not in s:
+              raise SystemExit('copyText block not found')
+          s = s.replace(old_copy, new_copy, 1)
+
+          s = s.replace(".power{border-top:1px solid #334155;margin-top:7px;padding-top:7px}pre{", ".power{border-top:1px solid #334155;margin-top:7px;padding-top:7px}.help{border-top:1px solid #334155;margin-top:7px;padding-top:7px;color:#cbd5e1}.help summary{cursor:pointer;color:#99f6e4;font-weight:700}.help p{margin:5px 0;color:#94a3b8;line-height:1.35}pre{", 1)
+
+          old_rows = """      <div class=\"row\"><button id=\"pick\">Pick element</button><button id=\"inspect\">Last/focused</button><button id=\"scan\">Page scan</button></div>
+      <div class=\"row\"><button id=\"copy-json\">Copy JSON</button><button id=\"copy-header\">Copy header</button><button id=\"clear\">Clear</button><button id=\"toggle\">Show JSON</button></div>
+      <div class=\"row\"><button id=\"pin-parent\">Use current as parent</button><button id=\"clear-parent\">Clear parent</button></div>
+      <div class=\"power\"><strong>Power tools</strong><div class=\"row\"><button id=\"copy-selector\">Copy selector</button><button id=\"copy-probe\">Copy JS probe</button><a href=\"${SOURCE_URL}\" target=\"_blank\" rel=\"noopener\">GitHub</a><a href=\"${RAW_URL}\" target=\"_blank\" rel=\"noopener\">Raw</a></div></div>
+      <div class=\"status\">Idle.</div><pre hidden>{}</pre>
+"""
+          new_rows = """      <div class=\"row\"><button id=\"pick\">Pick element</button><button id=\"inspect\">Last/focused</button><button id=\"scan\">Page scan</button></div>
+      <div class=\"row\"><button id=\"copy-json\">Copy JSON</button><button id=\"copy-header\">Copy header</button><button id=\"export-json\">Export capture</button><button id=\"export-page\">Export page for chat</button></div>
+      <div class=\"row\"><button id=\"clear\">Clear</button><button id=\"toggle\">Show JSON</button><button id=\"pin-parent\">Use current as parent</button><button id=\"clear-parent\">Clear parent</button></div>
+      <div class=\"power\"><strong>Power tools</strong><div class=\"row\"><button id=\"copy-selector\">Copy selector</button><button id=\"copy-probe\">Copy JS probe</button><a href=\"${SOURCE_URL}\" target=\"_blank\" rel=\"noopener\">GitHub</a><a href=\"${RAW_URL}\" target=\"_blank\" rel=\"noopener\">Raw</a></div></div>
+      <details class=\"help\"><summary>Help / read-only contract</summary>
+        <p><strong>Read-only:</strong> GFI inspects DOM, metadata, Knockout context and page structure. It does not intentionally edit fields, submit forms, invoke application actions, or write chart data.</p>
+        <p><strong>Pick element:</strong> intercepts one tap/click so the underlying control does not activate, then captures that element.</p>
+        <p><strong>Last/focused:</strong> captures the most recently touched/focused element without activating it.</p>
+        <p><strong>Page scan:</strong> inventories candidate controls and bindings without changing the page.</p>
+        <p><strong>Export capture:</strong> downloads the current normalized capture as JSON using the capture header's suggested filename.</p>
+        <p><strong>Export page for chat:</strong> after Page scan, downloads a portable .json bundle containing the header, page inventory and observations so it can be uploaded directly into ChatGPT.</p>
+        <p><strong>Clear:</strong> removes only GFI's current in-memory capture. Saved metadata preferences are retained.</p>
+      </details>
+      <div class=\"status\">Idle. Read-only mode.</div><pre hidden>{}</pre>
+"""
+          if old_rows not in s:
+              raise SystemExit('UI rows block not found')
+          s = s.replace(old_rows, new_rows, 1)
+
+          old_clicks = """  $('#copy-json').onclick=async()=>status(await copyText(JSON.stringify(result,null,2))?'JSON copied.':'Copy failed.');
+  $('#copy-header').onclick=async()=>status(await copyText(JSON.stringify(result?.header||{},null,2))?'Header copied.':'Copy failed.');
+  $('#pin-parent').onclick=()=>{if(!result?.header?.captureId)return status('Capture something first.');parentCaptureId=result.header.captureId;status(`Parent pinned: ${parentCaptureId}`);};
+"""
+          new_clicks = """  $('#copy-json').onclick=async()=>status(await copyText(JSON.stringify(result,null,2))?'JSON copied.':'Copy failed.');
+  $('#copy-header').onclick=async()=>status(await copyText(JSON.stringify(result?.header||{},null,2))?'Header copied.':'Copy failed.');
+  $('#export-json').onclick=()=>status(exportCaptureFile()?`Exported ${exportFilename(result)}.`:'Capture something first.');
+  $('#export-page').onclick=()=>status(exportPageChatFile()?'Page scan exported as chat-ready JSON.':'Run Page scan first.');
+  $('#pin-parent').onclick=()=>{if(!result?.header?.captureId)return status('Capture something first.');parentCaptureId=result.header.captureId;status(`Parent pinned: ${parentCaptureId}`);};
+"""
+          if old_clicks not in s:
+              raise SystemExit('copy handlers block not found')
+          s = s.replace(old_clicks, new_clicks, 1)
+
+          # Strengthen explicit read-only language in exported notes.
+          s = s.replace("'Read-only investigator capture.',", "'Read-only investigator capture; GFI does not intentionally invoke application actions or write page/chart fields.',", 1)
+
+          p.write_text(s)
+          PY
+      - name: Commit GFI 0.3.2
+        run: |
+          git config user.name "gremlinlogic-bot"
+          git config user.email "34165603+bljscrivener@users.noreply.github.com"
+          git add troubleshooters/gremlin-universal-investigator.user.js
+          git commit -m "GFI 0.3.2: read-only export and help"
+          git push
