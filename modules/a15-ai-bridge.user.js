@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Gremlin Logic A15 AI Bridge
 // @namespace    local.imagetrend.a15native.ai
-// @version      0.1.0
+// @version      0.1.1
 // @description  Guarded bridge to ImageTrend's native AI Capture and AI Generate Values actions for explicit A15 use.
 // @match        https://*.imagetrendelite.com/Elite/*
 // @grant        none
@@ -13,7 +13,7 @@
   'use strict';
 
   const MODULE_ID = 'ai-bridge';
-  const VERSION = '0.1.0';
+  const VERSION = '0.1.1';
   const NARRATIVE_ENTRY_ID = '9b465bdd-e13d-511c-8ead-d9743ed82234';
 
   function waitForRuntime(timeoutMs = 12000) {
@@ -46,10 +46,16 @@
     return window.imagetrend?.formComposer?.controlHandlers?.autoNarrative || null;
   }
 
+  function safetyGate() {
+    const safety = window.GremlinA15Safety?.canMutate?.();
+    return safety || { ok: true, reason: null };
+  }
+
   function capabilities() {
     const handler = nativeAiHandler();
     const capture = findButton('AI Capture');
     const generate = findButton('AI Generate Values');
+    const safety = safetyGate();
     return {
       handlerAvailable: !!handler,
       captureVisible: !!capture,
@@ -57,16 +63,20 @@
       generateVisible: !!generate,
       generateDisabled: !!generate?.disabled,
       directGenerateAvailable: typeof handler?.clickAiGenerateValues === 'function',
-      narrativeVisible: !!narrativeContainer()
+      narrativeVisible: !!narrativeContainer(),
+      safetyAllowed: !!safety.ok,
+      safetyReason: safety.ok ? null : safety.reason
     };
   }
 
   async function openCapture({ confirm = true } = {}) {
     const runtime = window.GremlinA15Runtime;
+    const gate = safetyGate();
+    if (!gate.ok) return { ok: false, reason: gate.reason, blockedBySafety: true };
     const button = findButton('AI Capture');
     if (!button) return { ok: false, reason: 'ai-capture-button-not-found' };
     if (button.disabled || button.classList.contains('btn-disabled')) return { ok: false, reason: 'ai-capture-disabled' };
-    if (confirm && !window.confirm('Open ImageTrend AI Capture?\n\nThis invokes ImageTrend\'s native AI feature. A15 does not send chart content to a separate AI service.')) return { ok: false, reason: 'cancelled' };
+    if (confirm && !window.confirm('Open ImageTrend AI Capture?\n\nThis invokes ImageTrend\'s native AI feature. A15 does not send chart content to a separate AI service. Native save/network side effects still require live validation.')) return { ok: false, reason: 'cancelled' };
     runtime?.emit?.('ai-native-action', { action: 'capture', phase: 'before' });
     button.click();
     runtime?.emit?.('ai-native-action', { action: 'capture', phase: 'after' });
@@ -75,14 +85,15 @@
 
   async function generateValues({ confirm = true } = {}) {
     const runtime = window.GremlinA15Runtime;
+    const gate = safetyGate();
+    if (!gate.ok) return { ok: false, reason: gate.reason, blockedBySafety: true };
     const handler = nativeAiHandler();
     const visible = findButton('AI Generate Values');
     if (visible?.disabled) return { ok: false, reason: 'ai-generate-disabled' };
-    if (confirm && !window.confirm('Run ImageTrend AI Generate Values for the current narrative context?\n\nReview every generated field before saving.')) return { ok: false, reason: 'cancelled' };
+    if (confirm && !window.confirm('Run ImageTrend AI Generate Values for the current narrative context?\n\nReview every generated field before saving. Native save/network side effects still require live validation.')) return { ok: false, reason: 'cancelled' };
 
     runtime?.emit?.('ai-native-action', { action: 'generate-values', phase: 'before' });
 
-    // Prefer the native visible control. It carries the exact KO context ImageTrend expects.
     if (visible) {
       visible.click();
       runtime?.emit?.('ai-native-action', { action: 'generate-values', phase: 'after', path: 'native-button' });
@@ -101,6 +112,7 @@
       runtime?.emit?.('ai-native-action', { action: 'generate-values', phase: 'after', path: 'native-handler' });
       return { ok: true, path: 'native-handler' };
     } catch (error) {
+      window.GremlinA15Safety?.recordFailure?.('native-ai-generate', { message: String(error?.message || error) });
       return { ok: false, reason: 'native-handler-threw', message: String(error?.message || error) };
     }
   }
