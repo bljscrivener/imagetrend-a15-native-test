@@ -7,76 +7,17 @@
     "required": true
   },
   "modules": [
-    {
-      "id": "findings-engine",
-      "version": "0.1.0",
-      "path": "modules/a15-findings-engine.user.js",
-      "defaultEnabled": true,
-      "dependsOn": ["a15-runtime-core"]
-    },
-    {
-      "id": "reconstruction-mapper",
-      "version": "0.1.0",
-      "path": "modules/a15-reconstruction.user.js",
-      "defaultEnabled": true,
-      "dependsOn": ["a15-runtime-core"]
-    },
-    {
-      "id": "compatibility-guard",
-      "version": "0.1.0",
-      "path": "modules/a15-compatibility-guard.user.js",
-      "defaultEnabled": true,
-      "dependsOn": ["a15-runtime-core", "reconstruction-mapper"]
-    },
-    {
-      "id": "safety-guard",
-      "version": "0.1.0",
-      "path": "modules/a15-safety-guard.user.js",
-      "defaultEnabled": true,
-      "dependsOn": ["a15-runtime-core", "compatibility-guard"]
-    },
-    {
-      "id": "protected-fields",
-      "version": "0.1.0",
-      "path": "modules/a15-protected-fields.user.js",
-      "defaultEnabled": true,
-      "dependsOn": ["a15-runtime-core"]
-    },
-    {
-      "id": "model-bridge",
-      "version": "0.1.1",
-      "path": "modules/a15-model-bridge.user.js",
-      "defaultEnabled": true,
-      "dependsOn": ["a15-runtime-core", "safety-guard"]
-    },
-    {
-      "id": "clinical-logic",
-      "version": "0.1.0",
-      "path": "modules/a15-clinical-logic.user.js",
-      "defaultEnabled": true,
-      "dependsOn": ["a15-runtime-core", "findings-engine", "model-bridge"]
-    },
-    {
-      "id": "ai-bridge",
-      "version": "0.1.0",
-      "path": "modules/a15-ai-bridge.user.js",
-      "defaultEnabled": true,
-      "dependsOn": ["a15-runtime-core", "safety-guard"]
-    },
-    {
-      "id": "protocol-assist",
-      "version": "0.1.1",
-      "path": "modules/a15-protocol-assist.user.js",
-      "defaultEnabled": true,
-      "dependsOn": ["a15-runtime-core", "model-bridge", "protected-fields"]
-    },
-    {
-      "id": "control-center",
-      "version": "0.1.1",
-      "path": "modules/a15-control-center.user.js",
-      "defaultEnabled": true,
-      "dependsOn": ["a15-runtime-core", "findings-engine"]
-    }
+    {"id":"findings-engine","version":"0.1.0","path":"modules/a15-findings-engine.user.js","defaultEnabled":true,"dependsOn":["a15-runtime-core"]},
+    {"id":"reconstruction-mapper","version":"0.1.0","path":"modules/a15-reconstruction.user.js","defaultEnabled":true,"dependsOn":["a15-runtime-core"]},
+    {"id":"compatibility-guard","version":"0.1.0","path":"modules/a15-compatibility-guard.user.js","defaultEnabled":true,"dependsOn":["a15-runtime-core","reconstruction-mapper"]},
+    {"id":"safety-guard","version":"0.1.0","path":"modules/a15-safety-guard.user.js","defaultEnabled":true,"dependsOn":["a15-runtime-core","compatibility-guard"]},
+    {"id":"protected-fields","version":"0.1.0","path":"modules/a15-protected-fields.user.js","defaultEnabled":true,"dependsOn":["a15-runtime-core"]},
+    {"id":"native-actions","version":"0.1.0","path":"modules/a15-native-actions.user.js","defaultEnabled":true,"dependsOn":["a15-runtime-core","safety-guard"]},
+    {"id":"model-bridge","version":"0.1.1","path":"modules/a15-model-bridge.user.js","defaultEnabled":true,"dependsOn":["a15-runtime-core","safety-guard"]},
+    {"id":"clinical-logic","version":"0.1.0","path":"modules/a15-clinical-logic.user.js","defaultEnabled":true,"dependsOn":["a15-runtime-core","findings-engine","model-bridge"]},
+    {"id":"ai-bridge","version":"0.1.1","path":"modules/a15-ai-bridge.user.js","defaultEnabled":true,"dependsOn":["a15-runtime-core","safety-guard"]},
+    {"id":"protocol-assist","version":"0.1.1","path":"modules/a15-protocol-assist.user.js","defaultEnabled":true,"dependsOn":["a15-runtime-core","model-bridge","protected-fields"]},
+    {"id":"control-center","version":"0.1.2","path":"modules/a15-control-center.user.js","defaultEnabled":true,"dependsOn":["a15-runtime-core","findings-engine","compatibility-guard","safety-guard"]}
   ],
   "loadOrder": [
     "a15-runtime-core",
@@ -85,6 +26,7 @@
     "compatibility-guard",
     "safety-guard",
     "protected-fields",
+    "native-actions",
     "model-bridge",
     "clinical-logic",
     "ai-bridge",
@@ -100,6 +42,7 @@
       "Persistent user profiles live under the runtime storage schema and must survive module updates.",
       "Reconstruction is metadata-only by default and must not become a keystroke or patient-text logger.",
       "Structural drift may reduce capability to REVIEW/BLOCKED; uncertainty never authorizes a broader write.",
+      "Unknown native action signatures are discovered but never guessed or invoked.",
       "Clinical and protocol writes require an explicit user action and must resolve and verify their target before proceeding.",
       "IV and IO are distinct medication administration routes and route-consistency logic must preserve that distinction.",
       "Procedure equipment size remains quarantined from categorical Adult/Pediatric automation until its numeric semantics are validated.",
