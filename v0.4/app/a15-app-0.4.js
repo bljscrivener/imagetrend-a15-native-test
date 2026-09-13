@@ -4,11 +4,12 @@
   if(!core) throw new Error('A15 Core 0.4 required');
   if(window.GremlinA15App04) return;
 
-  const VERSION='0.4.0-dev.1';
+  const VERSION='0.4.0-dev.2';
   const listeners=new Set();
   const snapshot=()=>({
     version:VERSION,
     legacyAvailable:!!window.GremlinA15LegacyCompat04?.available?.(),
+    clinicalAvailable:!!window.GremlinA15LegacyCompat04?.clinicalAvailable?.(),
     legacyState:window.GremlinA15LegacyCompat04?.state?.() || null,
     jobs:core.listJobs(),
     aggregate:core.aggregate(),
@@ -24,6 +25,10 @@
     subscribe(fn){ listeners.add(fn); try{fn(snapshot())}catch{}; return()=>listeners.delete(fn); },
     run(){ if(!window.GremlinA15LegacyCompat04?.available?.()) throw new Error('A15 0.3 execution bridge unavailable'); return window.GremlinA15LegacyCompat04.run(); },
     review(){ if(!window.GremlinA15LegacyCompat04?.available?.()) throw new Error('A15 0.3 execution bridge unavailable'); return window.GremlinA15LegacyCompat04.review(); },
+    prepareSalineFlush(route,doseMl){
+      if(!window.GremlinA15LegacyCompat04?.clinicalAvailable?.()) throw new Error('A15 clinical saline-flush helper unavailable');
+      return window.GremlinA15LegacyCompat04.prepareSalineFlush(route,doseMl);
+    },
     enqueueSource(source,options={}){
       if(!window.GremlinA15Evidence04?.enqueue) throw new Error('EvidencePipeline unavailable');
       return window.GremlinA15Evidence04.enqueue(source,options);
