@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Gremlin Logic A15 0.4 Dev Runtime
 // @namespace    local.imagetrend.a15native.v04
-// @version      0.4.0-dev.3
+// @version      0.4.0-dev.4
 // @description  A15 0.4 asynchronous scheduler/runtime layered over the known-good 0.3 mechanism.
 // @match        https://*.imagetrendelite.com/Elite/*
 // @grant        none
@@ -14,14 +14,14 @@
 // @require      https://raw.githubusercontent.com/bljscrivener/imagetrend-a15-native-test/a15-0.4-async-runtime/v0.4/services/legacy-compat.js?v=2
 // @require      https://raw.githubusercontent.com/bljscrivener/imagetrend-a15-native-test/a15-0.4-async-runtime/v0.4/pipelines/evidence-pipeline.js?v=1
 // @require      https://raw.githubusercontent.com/bljscrivener/imagetrend-a15-native-test/a15-0.4-async-runtime/v0.4/app/a15-app-0.4.js?v=2
-// @require      https://raw.githubusercontent.com/bljscrivener/imagetrend-a15-native-test/a15-0.4-async-runtime/v0.4/ui/a15-toolbar-0.4.js?v=1
+// @require      https://raw.githubusercontent.com/bljscrivener/imagetrend-a15-native-test/a15-0.4-async-runtime/v0.4/ui/a15-toolbar-0.4.js?v=2
 // @updateURL    https://raw.githubusercontent.com/bljscrivener/imagetrend-a15-native-test/a15-0.4-async-runtime/v0.4/a15-0.4-dev.user.js
 // @downloadURL  https://raw.githubusercontent.com/bljscrivener/imagetrend-a15-native-test/a15-0.4-async-runtime/v0.4/a15-0.4-dev.user.js
 // ==/UserScript==
 
 (() => {
   'use strict';
-  const version='0.4.0-dev.3';
+  const version='0.4.0-dev.4';
   const state={
     version,
     loadedAt:new Date().toISOString(),
