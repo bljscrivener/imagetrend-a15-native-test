@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Gremlin Logic A15 — Chicken Fetcher Package
 // @namespace    local.imagetrend.a15.chickenfetcher
-// @version      0.1.0
+// @version      0.1.1
 // @description  Unified iPad/Safari package: keeps the A15 modular stack in one Tampermonkey execution context and carries the validated legacy engine headlessly behind the new GUI.
 // @match        https://*.imagetrendelite.com/Elite/*
 // @grant        none
@@ -11,10 +11,12 @@
 // @require      https://raw.githubusercontent.com/bljscrivener/imagetrend-a15-native-test/main/imagetrend-a15-native-test.user.js
 // @require      https://raw.githubusercontent.com/bljscrivener/imagetrend-a15-native-test/main/modules/a15-runtime-core.user.js
 // @require      https://raw.githubusercontent.com/bljscrivener/imagetrend-a15-native-test/main/modules/a15-reconstruction.user.js
+// @require      https://raw.githubusercontent.com/bljscrivener/imagetrend-a15-native-test/main/modules/a15-model-bridge.user.js
 // @require      https://raw.githubusercontent.com/bljscrivener/imagetrend-a15-native-test/main/modules/a15-compatibility-guard.user.js
 // @require      https://raw.githubusercontent.com/bljscrivener/imagetrend-a15-native-test/main/modules/a15-safety-guard.user.js
 // @require      https://raw.githubusercontent.com/bljscrivener/imagetrend-a15-native-test/main/modules/a15-protected-fields.user.js
 // @require      https://raw.githubusercontent.com/bljscrivener/imagetrend-a15-native-test/main/modules/a15-findings-engine.user.js
+// @require      https://raw.githubusercontent.com/bljscrivener/imagetrend-a15-native-test/main/modules/a15-clinical-logic.user.js
 // @require      https://raw.githubusercontent.com/bljscrivener/imagetrend-a15-native-test/main/modules/a15-legacy-execution-bridge.user.js
 // @require      https://raw.githubusercontent.com/bljscrivener/imagetrend-a15-native-test/main/modules/a15-control-center.user.js
 // @require      https://raw.githubusercontent.com/bljscrivener/imagetrend-a15-native-test/main/modules/a15-gui.user.js
@@ -24,13 +26,13 @@
 (() => {
   'use strict';
 
-  const VERSION = '0.1.0';
+  const VERSION = '0.1.1';
   const HOST = 'gremlin-a15-chicken-fetcher-status';
   const startedAt = new Date().toISOString();
 
-  // This wrapper intentionally owns no clinical logic and performs no chart mutation.
-  // Its job is packaging: every required A15 component executes in the same raw/page
-  // context on iPad Safari so the existing window.GremlinA15* contracts work reliably.
+  // Packaging only. Clinical/model modules are required here so their existing guarded
+  // APIs live in the same raw/page context on iPad Safari; this wrapper itself owns no
+  // clinical policy and performs no chart mutation.
 
   function snapshot() {
     const legacyHost = document.getElementById('it-a15-native-test');
@@ -42,10 +44,12 @@
       route: location.pathname,
       runtime: window.GremlinA15Runtime?.version || null,
       reconstruction: window.GremlinA15Reconstruction?.version || null,
+      modelBridge: window.GremlinA15Bridge?.version || null,
       compatibility: window.GremlinA15Compatibility?.version || null,
       safety: window.GremlinA15Safety?.version || null,
       protectedFields: window.GremlinA15ProtectedFields?.version || null,
       findings: window.GremlinA15Findings?.version || null,
+      clinical: window.GremlinA15Clinical?.version || null,
       legacyExecution: window.GremlinA15LegacyExecution?.version || null,
       controlCenter: window.GremlinA15?.version || null,
       guiMounted: !!guiHost,
@@ -77,8 +81,6 @@
   setTimeout(() => publish('settled-2000ms'), 2000);
   setTimeout(() => publish('settled-5000ms'), 5000);
 
-  // Optional tiny failure marker only if the package itself loaded but the public bridge
-  // never appeared. The normal A15 GUI owns all regular presentation.
   setTimeout(() => {
     if (window.GremlinA15?.getState || document.getElementById('gremlin-a15-gui')) return;
     if (document.getElementById(HOST)) return;
