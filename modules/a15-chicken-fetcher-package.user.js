@@ -1,14 +1,14 @@
 // ==UserScript==
 // @name         Gremlin Logic A15 — Chicken Fetcher Package
 // @namespace    local.imagetrend.a15.chickenfetcher
-// @version      0.1.1
+// @version      0.1.2
 // @description  Unified iPad/Safari package: keeps the A15 modular stack in one Tampermonkey execution context and carries the validated legacy engine headlessly behind the new GUI.
 // @match        https://*.imagetrendelite.com/Elite/*
 // @grant        none
 // @sandbox      raw
 // @run-at       document-idle
 // @noframes
-// @require      https://raw.githubusercontent.com/bljscrivener/imagetrend-a15-native-test/main/imagetrend-a15-native-test.user.js
+// @require      https://raw.githubusercontent.com/bljscrivener/imagetrend-a15-native-test/main/imagetrend-a15-native-test.user.js?v=0.2.4.19
 // @require      https://raw.githubusercontent.com/bljscrivener/imagetrend-a15-native-test/main/modules/a15-runtime-core.user.js
 // @require      https://raw.githubusercontent.com/bljscrivener/imagetrend-a15-native-test/main/modules/a15-reconstruction.user.js
 // @require      https://raw.githubusercontent.com/bljscrivener/imagetrend-a15-native-test/main/modules/a15-model-bridge.user.js
@@ -26,7 +26,7 @@
 (() => {
   'use strict';
 
-  const VERSION = '0.1.1';
+  const VERSION = '0.1.2';
   const HOST = 'gremlin-a15-chicken-fetcher-status';
   const startedAt = new Date().toISOString();
 
@@ -53,42 +53,32 @@
       legacyExecution: window.GremlinA15LegacyExecution?.version || null,
       controlCenter: window.GremlinA15?.version || null,
       guiMounted: !!guiHost,
+      guiBridgeMode: guiHost?.dataset?.bridgeMode || null,
       legacyEnginePresent: !!legacyHost,
-      legacyEngineHidden: legacyHost ? getComputedStyle(legacyHost).display === 'none' : false
+      legacyEngineHidden: legacyHost ? getComputedStyle(legacyHost).display === 'none' : null
     });
   }
 
-  Object.defineProperty(window, 'GremlinA15ChickenFetcherPackage', {
-    configurable: true,
-    enumerable: false,
-    writable: false,
-    value: Object.freeze({ version: VERSION, snapshot })
-  });
-
-  function publish(reason) {
+  function publish(reason = 'package-ready') {
     const state = snapshot();
     try {
       document.documentElement.dataset.gremlinA15ChickenFetcher = JSON.stringify(state);
-      window.dispatchEvent(new CustomEvent('gremlin:a15:chicken-fetcher-state', {
-        detail: { reason, state }
-      }));
+      window.dispatchEvent(new CustomEvent('gremlin:a15:chicken-fetcher-state', { detail: { reason, state } }));
     } catch {}
     return state;
   }
 
-  publish('package-loaded');
-  setTimeout(() => publish('settled-500ms'), 500);
-  setTimeout(() => publish('settled-2000ms'), 2000);
-  setTimeout(() => publish('settled-5000ms'), 5000);
-
-  setTimeout(() => {
-    if (window.GremlinA15?.getState || document.getElementById('gremlin-a15-gui')) return;
+  function mountStatus() {
     if (document.getElementById(HOST)) return;
-    const el = document.createElement('div');
-    el.id = HOST;
-    el.style.cssText = 'position:fixed;right:12px;bottom:12px;z-index:2147483645;background:#2b1111;color:#fecaca;border:1px solid #ef4444;border-radius:9px;padding:8px 10px;font:12px system-ui;max-width:320px';
-    el.textContent = 'Chicken Fetcher loaded, but A15 public bridge did not come up. Export a GFI scan for diagnostics.';
-    document.body.appendChild(el);
-    publish('bridge-timeout');
-  }, 7000);
+    const host = document.createElement('div');
+    host.id = HOST;
+    host.hidden = true;
+    host.dataset.packageVersion = VERSION;
+    document.documentElement.append(host);
+  }
+
+  mountStatus();
+  publish();
+  setTimeout(() => publish('settled-1s'), 1000);
+  setTimeout(() => publish('settled-3s'), 3000);
 })();
