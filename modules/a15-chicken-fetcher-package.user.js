@@ -1,14 +1,14 @@
 // ==UserScript==
 // @name         Gremlin Logic A15 — Chicken Fetcher Package
 // @namespace    local.imagetrend.a15.chickenfetcher
-// @version      0.1.2
+// @version      0.1.3
 // @description  Unified iPad/Safari package: keeps the A15 modular stack in one Tampermonkey execution context and carries the validated legacy engine headlessly behind the new GUI.
 // @match        https://*.imagetrendelite.com/Elite/*
 // @grant        none
 // @sandbox      raw
 // @run-at       document-idle
 // @noframes
-// @require      https://raw.githubusercontent.com/bljscrivener/imagetrend-a15-native-test/main/imagetrend-a15-native-test.user.js?v=0.2.4.19
+// @require      https://raw.githubusercontent.com/bljscrivener/imagetrend-a15-native-test/main/imagetrend-a15-native-test.user.js?v=0.2.4.19b
 // @require      https://raw.githubusercontent.com/bljscrivener/imagetrend-a15-native-test/main/modules/a15-runtime-core.user.js
 // @require      https://raw.githubusercontent.com/bljscrivener/imagetrend-a15-native-test/main/modules/a15-reconstruction.user.js
 // @require      https://raw.githubusercontent.com/bljscrivener/imagetrend-a15-native-test/main/modules/a15-model-bridge.user.js
@@ -17,8 +17,9 @@
 // @require      https://raw.githubusercontent.com/bljscrivener/imagetrend-a15-native-test/main/modules/a15-protected-fields.user.js
 // @require      https://raw.githubusercontent.com/bljscrivener/imagetrend-a15-native-test/main/modules/a15-findings-engine.user.js
 // @require      https://raw.githubusercontent.com/bljscrivener/imagetrend-a15-native-test/main/modules/a15-clinical-logic.user.js
+// @require      https://raw.githubusercontent.com/bljscrivener/imagetrend-a15-native-test/main/modules/a15-medication-provider-repair.user.js?v=0.1.0
 // @require      https://raw.githubusercontent.com/bljscrivener/imagetrend-a15-native-test/main/modules/a15-legacy-execution-bridge.user.js
-// @require      https://raw.githubusercontent.com/bljscrivener/imagetrend-a15-native-test/main/modules/a15-control-center.user.js
+// @require      https://raw.githubusercontent.com/bljscrivener/imagetrend-a15-native-test/main/modules/a15-control-center.user.js?v=0.3.1
 // @require      https://raw.githubusercontent.com/bljscrivener/imagetrend-a15-native-test/main/modules/a15-gui.user.js
 // @require      https://raw.githubusercontent.com/bljscrivener/imagetrend-workflow-helper/main/src/a15/a15-helper.user.js
 // ==/UserScript==
@@ -26,13 +27,9 @@
 (() => {
   'use strict';
 
-  const VERSION = '0.1.2';
+  const VERSION = '0.1.3';
   const HOST = 'gremlin-a15-chicken-fetcher-status';
   const startedAt = new Date().toISOString();
-
-  // Packaging only. Clinical/model modules are required here so their existing guarded
-  // APIs live in the same raw/page context on iPad Safari; this wrapper itself owns no
-  // clinical policy and performs no chart mutation.
 
   function snapshot() {
     const legacyHost = document.getElementById('it-a15-native-test');
@@ -50,6 +47,7 @@
       protectedFields: window.GremlinA15ProtectedFields?.version || null,
       findings: window.GremlinA15Findings?.version || null,
       clinical: window.GremlinA15Clinical?.version || null,
+      medicationProviderRepair: window.GremlinA15MedicationRepair?.version || null,
       legacyExecution: window.GremlinA15LegacyExecution?.version || null,
       controlCenter: window.GremlinA15?.version || null,
       guiMounted: !!guiHost,
