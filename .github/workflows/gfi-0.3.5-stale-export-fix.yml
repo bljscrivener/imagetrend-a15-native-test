@@ -1,0 +1,132 @@
+name: GFI 0.3.5 stale export handoff fix
+
+on:
+  push:
+    paths:
+      - '.github/workflows/gfi-0.3.5-stale-export-fix.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch GFI export to bind current capture
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import re
+
+          p = Path('troubleshooters/gremlin-universal-investigator.user.js')
+          s = p.read_text()
+
+          # Version bump from whichever development copy is currently in main.
+          s = re.sub(r'// @version\s+0\.3\.[234]', '// @version      0.3.5', s, count=1)
+          s = re.sub(r"const VERSION = '0\.3\.[234]';", "const VERSION = '0.3.5';", s, count=1)
+
+          # Add immutable export identity state beside the normal capture state.
+          anchor = "  let parentCaptureId = null;\n"
+          if "let lastExportedCaptureId" not in s:
+              if anchor not in s:
+                  raise SystemExit('state anchor not found')
+              s = s.replace(anchor, anchor + "  let lastExportedCaptureId = null;\n", 1)
+
+          old = '''  function exportCaptureAsChatFile(capture) {
+    if (!capture?.header?.captureId) return false;
+    const filename = capture.header.exportHints?.chatFilename || `${slug(capture.header.friendlyName || capture.header.captureType || 'gfi-capture')}-chat.txt`;
+    downloadText(JSON.stringify(chatBundle(capture), null, 2), filename);
+    return true;
+  }
+'''
+          new = '''  function exportCaptureAsChatFile(capture, { allowRepeat = false } = {}) {
+    if (!capture?.header?.captureId) return { ok: false, reason: 'empty' };
+
+    // Resolve everything from the capture passed at click time. Never retain or
+    // reuse a prior Blob/File/object URL/filename between exports.
+    const captureId = capture.header.captureId;
+    if (!allowRepeat && captureId === lastExportedCaptureId) {
+      return { ok: false, reason: 'duplicate', captureId };
+    }
+
+    const capturedAt = String(capture.header.capturedAt || new Date().toISOString()).replace(/[:.]/g, '-');
+    const base = slug(capture.header.friendlyName || capture.header.captureType || 'gfi-capture') || 'gfi-capture';
+    const idPart = slug(captureId) || 'no-id';
+    const filename = `${base}-${capturedAt}-${idPart}.txt`;
+    const text = `GFI NORMALIZED CAPTURE\\nCapture-ID: ${captureId}\\nCaptured: ${capture.header.capturedAt || ''}\\n\\n--- JSON ---\\n${JSON.stringify(chatBundle(capture), null, 2)}`;
+
+    downloadText(text, filename);
+    lastExportedCaptureId = captureId;
+
+    // Best-effort locator bridge. The clipboard value comes from the exact same
+    // capture object as the file, preventing an old filename from surviving.
+    copyText(`${filename}\\n${captureId}`).catch(() => {});
+    return { ok: true, reason: 'downloaded', filename, captureId };
+  }
+'''
+          if old not in s:
+              raise SystemExit('exportCaptureAsChatFile anchor not found')
+          s = s.replace(old, new, 1)
+
+          old_page = '''    exportCaptureAsChatFile(capture);
+    status(`Page scan exported as ${capture.header.exportHints.chatFilename}. Upload that .txt directly into chat.`);
+'''
+          new_page = '''    const exported = exportCaptureAsChatFile(capture);
+    status(exported.ok
+      ? `Page scan exported ${exported.captureId} as ${exported.filename}.`
+      : `Export failed: ${exported.reason}.`);
+'''
+          if old_page in s:
+              s = s.replace(old_page, new_page, 1)
+
+          old_current = '''  $('#export-current').onclick = () => {
+    if (!exportCaptureAsChatFile(result)) return status('Capture something first.');
+    status(`Current capture exported as ${result.header.exportHints?.chatFilename || 'text file'}.`);
+  };
+'''
+          new_current = '''  $('#export-current').onclick = () => {
+    // Resolve result NOW, at tap time. This prevents a stale export closure from
+    // pointing at an older capture after the investigator has moved on.
+    const current = result;
+    const exported = exportCaptureAsChatFile(current);
+    if (!exported.ok) {
+      if (exported.reason === 'duplicate') {
+        return status(`Already exported ${exported.captureId}. Capture/select a newer item before exporting again.`);
+      }
+      return status('Capture something first.');
+    }
+    status(`Exported ${exported.captureId} as ${exported.filename}.`);
+  };
+'''
+          if old_current not in s:
+              raise SystemExit('export-current handler anchor not found')
+          s = s.replace(old_current, new_current, 1)
+
+          # Ensure Clear also invalidates the export identity bridge.
+          old_clear = "  $('#clear').onclick = () => { render({}); lastTarget = null; pickMode = null; status('Capture cleared. Metadata preferences retained.'); };\n"
+          new_clear = "  $('#clear').onclick = () => { render({}); lastTarget = null; pickMode = null; lastExportedCaptureId = null; status('Capture cleared. Metadata preferences retained.'); };\n"
+          if old_clear in s:
+              s = s.replace(old_clear, new_clear, 1)
+
+          # Export help now states the anti-stale invariant.
+          help_anchor = '<p><b>Export current .txt:</b> downloads whatever capture is currently loaded.</p>'
+          help_new = '<p><b>Export current .txt:</b> exports the capture currently loaded at the instant you tap. Each file includes its capture ID + timestamp in the filename. GFI blocks accidental repeat-export of the same capture so an old artifact cannot masquerade as a new one.</p>'
+          if help_anchor in s:
+              s = s.replace(help_anchor, help_new, 1)
+
+          p.write_text(s)
+          PY
+      - name: Verify patch invariants
+        run: |
+          grep -q "@version      0.3.5" troubleshooters/gremlin-universal-investigator.user.js
+          grep -q "lastExportedCaptureId" troubleshooters/gremlin-universal-investigator.user.js
+          grep -q "Capture-ID:" troubleshooters/gremlin-universal-investigator.user.js
+          node --check troubleshooters/gremlin-universal-investigator.user.js
+      - name: Commit GFI 0.3.5
+        run: |
+          git config user.name "gremlinlogic-bot"
+          git config user.email "34165603+bljscrivener@users.noreply.github.com"
+          git add troubleshooters/gremlin-universal-investigator.user.js
+          git commit -m "GFI 0.3.5: bind exports to current capture" || exit 0
+          git push
