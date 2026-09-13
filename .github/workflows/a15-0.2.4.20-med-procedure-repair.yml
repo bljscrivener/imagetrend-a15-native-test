@@ -1,0 +1,93 @@
+name: A15 0.2.4.20 medication + procedure repair
+
+on:
+  push:
+    paths:
+      - '.github/workflows/a15-0.2.4.20-med-procedure-repair.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch A15 live engine
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('imagetrend-a15-native-test.user.js')
+          s=p.read_text()
+
+          reps=[
+            ('// @version      0.2.4.19','// @version      0.2.4.20'),
+            ('Gremlin Logic · A15 0.2.4.19','Gremlin Logic · A15 0.2.4.20'),
+            ("const repeated=captured&&/^Incident.Scene.Response.Patient.(Vitals|PatientProcedures)\\[\\]\\./.test(captured);",
+             "const repeated=captured&&/^Incident.Scene.Response.Patient.(Vitals|PatientProcedures|Medications)\\[\\]\\./.test(captured);"),
+            ("const path=ENTRY_PATHS[c.id]||'',section=path.includes('Vitals')?'Assessment':path.includes('Procedure')||c.create?'Treatment':",
+             "const path=ENTRY_PATHS[c.id]||'',section=path.includes('Vitals')?'Assessment':path.includes('Procedure')||path.includes('Medications')||c.create?'Treatment':"),
+            ("const payload=JSON.stringify({schema:1,version:'0.2.4.18',reason,url:location.href,capturedAt:new Date().toISOString(),incident:data});",
+             "const payload=JSON.stringify({schema:1,version:'0.2.4.20',reason,url:location.href,capturedAt:new Date().toISOString(),incident:data});")
+          ]
+          for old,new in reps:
+            if old not in s:
+              raise SystemExit('expected patch target not found: '+old[:160])
+            s=s.replace(old,new,1)
+
+          guard_old="""    const canApply=(repeated||PRIORITY_FIELDS.has(c.id))?current!==target:!current&&(c.multi?collection.length===0:answers.every(value=>value==null||value===''));"""
+          guard_new="""    if(c.mode==='medicationProviderCertification'&&current!==target&&current&&!same(current,'Critical Care Paramedic'))throw Error('Unexpected medication provider certification; existing value preserved.');
+    const canApply=(repeated||PRIORITY_FIELDS.has(c.id))?current!==target:!current&&(c.multi?collection.length===0:answers.every(value=>value==null||value===''));"""
+          if guard_old not in s: raise SystemExit('canApply anchor not found')
+          s=s.replace(guard_old,guard_new,1)
+
+          anchor="""  function assessmentPlan(){"""
+          insert=r'''  function medicationProviderRules(){
+    learnDefinitions();
+    const app=window.imagetrend;
+    const all=[...(app.formComposer.agencyPresetValues||[]).flatMap(x=>x.PresetValues||[]),...learnedDefinitions.values()];
+    const seen=new Set(),candidates=[];
+    for(const d of all){
+      const id=d?.BindingPathEntryID,path=d?.BindingPathFromOrigin;
+      if(!id||typeof path!=='string'||!/^Incident\.Scene\.Response\.Patient\.Medications\[\]\./.test(path))continue;
+      if(!/(certification|licensurelevel|providertype|providerlevel|crewmemberlevel)/i.test(path))continue;
+      const key=id+'|'+path;if(seen.has(key))continue;seen.add(key);
+      const resource=app.formComposer.agencyResources?.[String(id).toLowerCase()];
+      const elements=resource?.Elements||[];
+      if(elements.some(e=>norm(e.Value)==='Paramedic'))candidates.push({id,path});
+    }
+    if(candidates.length!==1){
+      return [{id:'a15-med-provider-certification-unmapped',label:'Medication Provider Certification',target:'Paramedic',mode:'medicationProviderCertification',problem:candidates.length?'Medication provider certification mapping is ambiguous; inspect the open medication editor.':'Medication provider certification mapping is not loaded; open one medication entry and Preview again.'}];
+    }
+    const match=candidates[0];
+    ENTRY_PATHS[match.id]=match.path;
+    return [{id:match.id,label:'Medication Provider Certification',target:'Paramedic',mode:'medicationProviderCertification'}];
+  }
+
+'''
+          if anchor not in s: raise SystemExit('assessmentPlan anchor not found')
+          s=s.replace(anchor,insert+anchor,1)
+
+          selected_old="""      const selected=[...choices,...delayChoices(),{id:'9753adcb-f760-554b-94d6-60a5e82badd8',label:'Receiving Hospital Contacted',time:true,target:times['29338']==null?'':localStamp(times['29338']-300000)}];"""
+          selected_new="""      const selected=[...choices,...medicationProviderRules(),...delayChoices(),{id:'9753adcb-f760-554b-94d6-60a5e82badd8',label:'Receiving Hospital Contacted',time:true,target:times['29338']==null?'':localStamp(times['29338']-300000)}];"""
+          if selected_old not in s: raise SystemExit('selected rules anchor not found')
+          s=s.replace(selected_old,selected_new,1)
+          p.write_text(s)
+          PY
+      - name: Syntax check
+        run: node --check imagetrend-a15-native-test.user.js
+      - name: Verify repair invariants
+        run: |
+          grep -F "@version      0.2.4.20" imagetrend-a15-native-test.user.js
+          grep -F "Vitals|PatientProcedures|Medications" imagetrend-a15-native-test.user.js
+          grep -F "Medication Provider Certification" imagetrend-a15-native-test.user.js
+          grep -F "Stroke Assessment" imagetrend-a15-native-test.user.js
+          grep -F "Moving a patient to a stretcher" imagetrend-a15-native-test.user.js
+          grep -F "Critical Care Paramedic" imagetrend-a15-native-test.user.js
+      - name: Commit repair
+        run: |
+          git config user.name "gremlinlogic-bot"
+          git config user.email "34165603+bljscrivener@users.noreply.github.com"
+          git add imagetrend-a15-native-test.user.js
+          git commit -m "A15 0.2.4.20: repair medication provider metadata and procedure routing"
+          git push
