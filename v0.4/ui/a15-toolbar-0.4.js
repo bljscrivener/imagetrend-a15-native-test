@@ -5,7 +5,7 @@
   if(!app || !core) throw new Error('A15 0.4 app/core required');
   if(document.getElementById('gremlin-a15-toolbar-04')) return;
 
-  const VERSION='0.4.0-dev.1';
+  const VERSION='0.4.0-dev.2';
   const HOST_ID='gremlin-a15-toolbar-04';
   const OLD_GUI_ID='gremlin-a15-gui';
   let host=null, shadow=null, oldGuiHidden=false, lastCompleteAt=0;
@@ -16,7 +16,7 @@
   function findAiCheck(){
     const bottom=document.querySelector('#bottom-pane') || document.body;
     const candidates=[...bottom.querySelectorAll('button,a,li,[role="button"],span,div')]
-      .filter(el=>visible(el) && norm(el.textContent)==='AI Check' && !el.closest(`#${HOST_ID}`));
+      .filter(el=>visible(el) && ['AI Check','AI ✓'].includes(norm(el.textContent)) && !el.closest(`#${HOST_ID}`));
     candidates.sort((a,b)=>{
       const rank=x=>/^(BUTTON|A|LI)$/.test(x.tagName)||x.getAttribute('role')==='button'?0:1;
       return rank(a)-rank(b) || (a.getBoundingClientRect().width*a.getBoundingClientRect().height)-(b.getBoundingClientRect().width*b.getBoundingClientRect().height);
@@ -27,6 +27,27 @@
   function anchorFor(ai){
     if(!ai) return null;
     return ai.closest('button,a,li,[role="button"]') || ai;
+  }
+
+  // Cosmetic skin only: preserve ImageTrend's native element, bindings, icon and click handler.
+  // Replace only the visible text node, and keep the full semantic label for accessibility.
+  function compactAiCheck(anchor){
+    if(!anchor || anchor.dataset.gremlinAiCheckCompact==='1') return false;
+    const walker=document.createTreeWalker(anchor,NodeFilter.SHOW_TEXT);
+    let node;
+    while((node=walker.nextNode())){
+      if(norm(node.nodeValue)==='AI Check'){
+        const raw=String(node.nodeValue||'');
+        const lead=raw.match(/^\s*/)?.[0]||'';
+        const trail=raw.match(/\s*$/)?.[0]||'';
+        node.nodeValue=`${lead}AI ✓${trail}`;
+        anchor.dataset.gremlinAiCheckCompact='1';
+        if(!anchor.getAttribute('aria-label')) anchor.setAttribute('aria-label','AI Check');
+        if(!anchor.getAttribute('title')) anchor.setAttribute('title','AI Check');
+        return true;
+      }
+    }
+    return false;
   }
 
   function hideOldGui(hide=true){
@@ -49,6 +70,7 @@
     if(!ai) return false;
     const anchor=anchorFor(ai);
     if(!anchor?.parentElement) return false;
+    compactAiCheck(anchor);
 
     host=document.createElement('span');
     host.id=HOST_ID;
