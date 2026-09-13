@@ -1,0 +1,55 @@
+name: A15 0.2.4.19 procedure hotfix
+
+on:
+  push:
+    paths:
+      - '.github/workflows/a15-0.2.4.19-procedure-hotfix.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Patch A15 procedure bundle
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('imagetrend-a15-native-test.user.js')
+          s=p.read_text()
+
+          replacements=[
+            ('// @version      0.2.4.18','// @version      0.2.4.19'),
+            ('Gremlin Logic · A15 0.2.4.18','Gremlin Logic · A15 0.2.4.19'),
+            ("const procedureNames=['Assessment -ALS','Neurological assessment','Adult pain assessment','Moving a patient to a stretcher'];",
+             "const procedureNames=['Assessment -ALS','Neurological assessment','Stroke Assessment','Adult pain assessment','Moving a patient to a stretcher'];"),
+            ("    if(classified.some(x=>!x.name))throw Error('Unrecognized existing procedure preserved; A15 procedure creation deferred.');\n",
+             "    // Preserve unrelated/unrecognized procedures without blocking creation of the known A15 bundle.\n    // creationPlan only adds names from procedureNames and never edits unknown entries.\n"),
+            ("if(!path||!/^Incident.Scene.Response.Patient.(Vitals|PatientProcedures)\\[\\]\\./.test(path))return [c];",
+             "if(!path||!/^Incident.Scene.Response.Patient.(Vitals|PatientProcedures|Medications)\\[\\]\\./.test(path))return [c];"),
+            ("entryLabel:(path.includes('.Vitals[]')?'Vital':'Procedure')+' '+(i+1)",
+             "entryLabel:(path.includes('.Vitals[]')?'Vital':path.includes('.Medications[]')?'Medication':'Procedure')+' '+(i+1)")
+          ]
+          for old,new in replacements:
+            if old not in s:
+              raise SystemExit('expected patch target not found: '+old[:120])
+            s=s.replace(old,new,1)
+
+          p.write_text(s)
+          PY
+      - name: Syntax check
+        run: node --check imagetrend-a15-native-test.user.js
+      - name: Verify hotfix invariants
+        run: |
+          grep -F "Stroke Assessment" imagetrend-a15-native-test.user.js
+          ! grep -F "Unrecognized existing procedure preserved; A15 procedure creation deferred." imagetrend-a15-native-test.user.js
+          grep -F "Vitals|PatientProcedures|Medications" imagetrend-a15-native-test.user.js
+      - name: Commit hotfix
+        run: |
+          git config user.name "gremlinlogic-bot"
+          git config user.email "34165603+bljscrivener@users.noreply.github.com"
+          git add imagetrend-a15-native-test.user.js
+          git commit -m "A15 0.2.4.19: repair procedure bundle and prep medication entry expansion"
+          git push
