@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Gremlin Logic A15 Control Center
 // @namespace    local.imagetrend.a15native.control
-// @version      0.3.0
+// @version      0.3.1
 // @description  Headless A15 application/controller bridge. Owns no DOM and exposes a stable UI-facing API over A15 runtime modules.
 // @match        https://*.imagetrendelite.com/Elite/*
 // @grant        none
@@ -13,8 +13,8 @@
   'use strict';
 
   const MODULE_ID = 'control-center';
-  const VERSION = '0.3.0';
-  const BRIDGE_VERSION = '1.1.0';
+  const VERSION = '0.3.1';
+  const BRIDGE_VERSION = '1.1.1';
   const EVENT = 'gremlin:a15:bridge-state';
   let runtime = null;
   let unsubscribe = [];
@@ -144,8 +144,16 @@
       notify('execution-requested');
       try {
         const result = await window.GremlinA15LegacyExecution.goBabyGo();
+        let medicationRepair = null;
+        if (window.GremlinA15MedicationRepair?.run) {
+          try {
+            medicationRepair = await window.GremlinA15MedicationRepair.run({ confirm: true });
+          } catch (error) {
+            medicationRepair = { ok: false, reason: String(error?.message || error) };
+          }
+        }
         notify('execution-complete');
-        return { ok: true, state: result };
+        return { ok: true, state: result, medicationRepair };
       } catch (error) {
         notify('execution-error');
         return { ok: false, reason: String(error?.message || error), state: execution() };
@@ -289,7 +297,8 @@
       'gremlin:a15:safety-reset',
       'gremlin:a15:module-started',
       'gremlin:a15:module-stopped',
-      'gremlin:a15:legacy-execution-state'
+      'gremlin:a15:legacy-execution-state',
+      'gremlin:a15:medication-provider-repair'
     ].forEach(name => on(name, relay));
 
     notify('bridge-ready');
